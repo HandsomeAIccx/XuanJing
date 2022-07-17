@@ -11,3 +11,7 @@
 7. Model parameters are updated by the learner using data and algorithms.
 8. utils are a class of useful functions.
 
+## Schedule
+
+1. 2022.06.13：找点事干～～
+2. 2022.07.16: 开始搭建框架，验证想法。
