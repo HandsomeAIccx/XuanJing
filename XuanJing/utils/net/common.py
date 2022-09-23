@@ -12,7 +12,7 @@ from torch import nn
 def mlpblock(
 		input_dim,
 		output_dim,
-		activation = None,
+		activation=None,
 ):
 	layers = [nn.Linear(input_dim, output_dim)]
 	if activation is not None:
@@ -42,5 +42,6 @@ class MLP(nn.Module):
 		self.model = nn.Sequential(*model)
 
 	def forward(self, obs):
+		assert isinstance(obs, torch.Tensor), "Forward obs data must be Tensor."
 		return self.model(obs)
 
