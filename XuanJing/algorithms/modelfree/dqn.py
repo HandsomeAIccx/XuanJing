@@ -11,18 +11,7 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 from XuanJing.buffer.replaybuffer import ReplayBuffer
-
-
-def to_torch(data):
-    if isinstance(data, dict):
-        return {k: to_torch(v) for k, v in data.items()}
-    elif isinstance(data, np.ndarray):
-        if data.dtype == int:
-            return torch.tensor(data, dtype=torch.int64)
-        else:
-            return torch.tensor(data, dtype=torch.float)
-    else:
-        return ValueError(f"Not Support type {type(data)}")
+from XuanJing.utils.torch_utils import to_torch
 
 
 class DQN(nn.Module):
