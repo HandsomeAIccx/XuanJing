@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
-# @Time    : 2022/9/24 9:55 上午
+# @Time    : 2022/9/24 11:36 上午
 # @Author  : Zhiqiang He
 # @Email   : tinyzqh@163.com
-# @File    : actor_critic.py
+# @File    : ppo.py
 # @Software: PyCharm
 
 
 import torch
 from XuanJing.utils.torch_utils import to_torch
 import torch.nn.functional as F
+
 
 class ValueNet(torch.nn.Module):
     def __init__(self, state_dim, hidden_dim):
@@ -21,7 +22,7 @@ class ValueNet(torch.nn.Module):
         return self.fc2(x)
 
 
-class ActorCritic(object):
+class PPO(object):
     def __init__(
             self,
             actor,
@@ -34,6 +35,16 @@ class ActorCritic(object):
         self.critic_optim = torch.optim.Adam(self.critic_net.parameters(), lr=1e-2)
         self.args = args
         self.learn_step = 0
+
+    def compute_advantage(self, gamma, lmbda, td_delta):
+        td_delta = td_delta.detach().numpy()
+        advantage_list = []
+        advantage = 0.0
+        for delta in td_delta[::-1]:
+            advantage = gamma * lmbda * advantage + delta
+            advantage_list.append(advantage)
+        advantage_list.reverse()
+        return torch.tensor(advantage_list, dtype=torch.float)
 
     def updata_parameter(
             self,
@@ -49,16 +60,25 @@ class ActorCritic(object):
         td_target = rewards + self.args.gamma * self.critic_net(next_obs) * (1 - done)
         td_delta = td_target - self.critic_net(obs)
 
-        predict_prob = self.actor_net(obs)
-        softmax_probs = F.softmax(predict_prob, dim=1)
-        log_prob = torch.log(softmax_probs).gather(1, actions)
+        advantage = self.compute_advantage(self.args.gamma, 0.95, td_delta)
+        old_log_probs = torch.log(F.softmax(self.actor_net(obs), dim=1).gather(1, actions)).detach()
 
-        actor_loss = torch.mean(-log_prob * td_delta.detach())
-        critic_loss = torch.mean(F.mse_loss(self.critic_net(obs), td_target.detach()))
+        for i in range(10):
+            predict_prob = self.actor_net(obs)
+            softmax_probs = F.softmax(predict_prob, dim=1)
+            log_prob = torch.log(softmax_probs).gather(1, actions)
 
-        self.actor_optim.zero_grad()
-        self.critic_optim.zero_grad()
-        actor_loss.backward()
-        critic_loss.backward()
-        self.actor_optim.step()
-        self.critic_optim.step()
+            ratio = torch.exp(log_prob - old_log_probs)
+            surr1 = ratio * advantage
+            surr2 = torch.clamp(ratio, 1 - 0.2, 1 + 0.2) * advantage
+
+            actor_loss = torch.mean(- torch.min(surr1, surr2))
+
+            critic_loss = torch.mean(F.mse_loss(self.critic_net(obs), td_target.detach()))
+
+            self.actor_optim.zero_grad()
+            self.critic_optim.zero_grad()
+            actor_loss.backward()
+            critic_loss.backward()
+            self.actor_optim.step()
+            self.critic_optim.step()
