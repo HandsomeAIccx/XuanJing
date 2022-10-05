@@ -17,5 +17,18 @@ def to_torch(data):
             return torch.tensor(data, dtype=torch.int64)
         else:
             return torch.tensor(data, dtype=torch.float)
+    elif isinstance(data, list):
+        return [torch.tensor(i) for i in data]
     else:
         return ValueError(f"Not Support type {type(data)}")
+
+
+def to_numpy(data):
+    if isinstance(data, dict):
+        return {k: to_numpy(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [to_numpy(i) for i in data]
+    elif isinstance(data, torch.Tensor):
+        return data.detach().cpu().numpy()
+    else:
+        return np.asarray(data)
