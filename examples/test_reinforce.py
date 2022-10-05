@@ -38,7 +38,7 @@ def train_loop(envs, actor, algorithm, optimizer, args):
     return None
 
 
-def dqn_args():
+def reinforce_args():
     parser = argparse.ArgumentParser()
     # env
     parser.add_argument("--task", type=str, default="CartPole-v0")
@@ -62,25 +62,25 @@ def dqn_args():
 
 
 if __name__ == "__main__":
-    dqn_args = dqn_args()
-    np.random.seed(dqn_args.seed)
-    torch.manual_seed(dqn_args.seed)
+    reinfoce_args = reinforce_args()
+    np.random.seed(reinforce_args.seed)
+    torch.manual_seed(reinforce_args.seed)
 
-    envs = VectorEnv([lambda: gym.make('CartPole-v0') for _ in range(dqn_args.env_num)])
+    envs = VectorEnv([lambda: gym.make('CartPole-v0') for _ in range(reinfoce_args.env_num)])
 
     actor_net = MLP(
         input_dim=int(np.prod(envs.observation_space.shape)),
         output_dim=int(np.prod(envs.action_space.n)),
-        hidden_sizes=dqn_args.actor_net,
+        hidden_sizes=reinfoce_args.actor_net,
     )
 
-    actor = SoftmaxActor(actor_net, envs, dqn_args)
-    optim = torch.optim.Adam(actor_net.parameters(), lr=dqn_args.lr)
+    actor = SoftmaxActor(actor_net, envs, reinfoce_args)
+    optim = torch.optim.Adam(actor_net.parameters(), lr=reinfoce_args.lr)
 
     train_loop(
         envs=envs,
         actor=actor,
         algorithm=Reinforce,
         optimizer=optim,
-        args=dqn_args
+        args=reinfoce_args
     )
