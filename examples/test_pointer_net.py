@@ -20,7 +20,7 @@ def train_loop(env, actor_net, algorithm, optimizer, args):
     agent = algorithm(actor=actor_net, optim=optimizer, args=args)
     train_tour = []
 
-    for _ in tqdm(range(200)):
+    for _ in tqdm(range(800)):
         state = env.reset()
         return_reward = agent.updata_parameter(train_data=torch.tensor(state))
         train_tour.append(return_reward.mean().item())

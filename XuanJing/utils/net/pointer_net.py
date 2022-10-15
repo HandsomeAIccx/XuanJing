@@ -9,17 +9,8 @@ import torch
 import math
 import torch.nn as nn
 
-
-class Attention(nn.Module):
-    def __init__(self):
-        super(Attention, self).__init__()
-
-    def forward(self, query, ref):
-        query = query.unsqueeze(2)
-        logits = torch.bmm(ref, query).squeeze(2)
-        ref = ref.permute(0, 2, 1)
-        return ref, logits
-
+from XuanJing.utils.net.attention import Attention
+from XuanJing.utils.net.gtrxl import StableTransformerXL
 
 class PointerNet(nn.Module):
     def __init__(self, args):
@@ -34,10 +25,15 @@ class PointerNet(nn.Module):
             torch.nn.Linear(self.hidden_size, self.hidden_size)
         )
         # self.encoder = nn.LSTM(embedding_size, hidden_size, batch_first=True)
-        self.encoder = torch.nn.TransformerEncoder(
-            torch.nn.TransformerEncoderLayer(self.hidden_size, nhead=4, dim_feedforward=self.hidden_size, \
-                                             batch_first=True, dropout=0), num_layers=1
+        # self.encoder = torch.nn.TransformerEncoder(
+        #     torch.nn.TransformerEncoderLayer(self.hidden_size, nhead=4, dim_feedforward=self.hidden_size, \
+        #                                      batch_first=True, dropout=0), num_layers=1
+        # )
+
+        self.encoder = StableTransformerXL(
+            d_input=self.hidden_size, n_layers=1, n_heads=4, d_head_inner=32, d_ff_inner=16
         )
+
         self.decoder = nn.LSTM(self.hidden_size, self.hidden_size, batch_first=True)
         self.pointer = Attention()
 
@@ -57,7 +53,8 @@ class PointerNet(nn.Module):
         B, S, F = inputs.size()
 
         features = self.embedding(inputs)
-        encoder_out = self.encoder(features)
+        encoder_out = self.encoder(features, None)["logits"]
+        # encoder_out = self.encoder(features)
         hidden = torch.max(encoder_out, dim=1)[0].unsqueeze(0)
         cell = torch.max(encoder_out, dim=1)[0].unsqueeze(0)
 
@@ -70,7 +67,7 @@ class PointerNet(nn.Module):
         action_prob = []
         for i in range(S):
             decoder_out, (hidden, cell) = self.decoder(decoder_input.unsqueeze(1), (hidden, cell))
-            _, logits = self.pointer(decoder_out.squeeze(1), encoder_out)
+            logits = self.pointer(decoder_out, encoder_out)
             logits, mask = self.apply_mask_to_logits(logits, mask, idx)
             probs = torch.nn.functional.softmax(logits, dim=1)  # [B, S]
             idx = probs.multinomial(1).squeeze(1)
