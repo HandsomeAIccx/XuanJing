@@ -58,13 +58,13 @@ class PositionwiseFF(nn.Module):
             ##### layer normalization + positionwise feed-forward
             core_out = self.CoreNet(self.layer_norm(inp))
 
-            ##### residual connection
+            ##### residual context
             output = core_out + inp
         else:
             ##### positionwise feed-forward
             core_out = self.CoreNet(inp)
 
-            ##### residual connection + layer normalization
+            ##### residual context + layer normalization
             output = self.layer_norm(inp + core_out)
 
         return output
@@ -135,10 +135,10 @@ class MultiHeadAttn(nn.Module):
         attn_out = self.drop(attn_out)
 
         if self.pre_lnorm:
-            ##### residual connection
+            ##### residual context
             output = h + attn_out
         else:
-            ##### residual connection + layer normalization
+            ##### residual context + layer normalization
             output = self.layer_norm(h + attn_out)
 
         return output
@@ -286,10 +286,10 @@ class RelPartialLearnableMultiHeadAttn(RelMultiHeadAttn):
         attn_out = self.drop(attn_out)
 
         if self.pre_lnorm:
-            ##### residual connection
+            ##### residual context
             output = w + attn_out
         else:
-            ##### residual connection + layer normalization
+            ##### residual context + layer normalization
             output = self.layer_norm(w + attn_out)
 
         return output
@@ -371,10 +371,10 @@ class RelLearnableMultiHeadAttn(RelMultiHeadAttn):
         attn_out = self.drop(attn_out)
 
         if self.pre_lnorm:
-            ##### residual connection
+            ##### residual context
             output = w + attn_out
         else:
-            ##### residual connection + layer normalization
+            ##### residual context + layer normalization
             output = self.layer_norm(w + attn_out)
 
         return output

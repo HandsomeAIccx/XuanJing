@@ -5,7 +5,7 @@
 # @File    : sampler.py
 # @Software: PyCharm
 
-from XuanJing.env.Sampling.patch import Patch
+from XuanJing.env.sample.patch import Patch
 import copy
 import numpy as np
 

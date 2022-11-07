@@ -5,7 +5,7 @@
 # @File    : next_state.py
 # @Software: PyCharm
 
-from XuanJing.env.Sampling.patch import Patch
+from XuanJing.env.sample.patch import Patch
 import numpy as np
 
 def enhance_next_state(patch_data):

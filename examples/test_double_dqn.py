@@ -15,11 +15,11 @@ import torch
 import matplotlib.pyplot as plt
 
 from XuanJing.utils.net.common import MLP
-from XuanJing.env.Sampling.sampler import Sampler
+from XuanJing.env.sample.sampler import Sampler
 from XuanJing.algorithms.modelfree.double_dqn import DoubleDQN
 from XuanJing.env.vector.vecbase import VectorEnv
 from XuanJing.enhancement.next_state import enhance_next_state
-from XuanJing.actor.epsilon_greedy_actor import EpsGreedyActor
+from XuanJing.actor.actor_group.epsilon_greedy_actor import EpsGreedyActor
 
 
 def train_loop(envs, actor, algorithm, optimizer, args):

@@ -6,7 +6,7 @@
 # @Software: PyCharm
 
 import numpy as np
-from XuanJing.env.Sampling.patch import Patch
+from XuanJing.env.sample.patch import Patch
 
 
 if __name__ == "__main__":

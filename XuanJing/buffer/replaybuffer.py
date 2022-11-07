@@ -5,7 +5,7 @@
 # @File    : replaybuffer.py
 # @Software: PyCharm
 
-from XuanJing.env.Sampling.patch import Patch
+from XuanJing.env.sample.patch import Patch
 import collections
 import random
 import copy

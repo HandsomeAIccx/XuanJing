@@ -15,11 +15,11 @@ import torch
 import matplotlib.pyplot as plt
 
 from XuanJing.utils.net.common import MLP
-from XuanJing.env.Sampling.sampler import Sampler
+from XuanJing.env.sample.sampler import Sampler
 from XuanJing.algorithms.modelfree.sac import SAC
 from XuanJing.env.vector.vecbase import VectorEnv
 from XuanJing.enhancement.next_state import enhance_next_state
-from XuanJing.actor.softmax_actor import SoftmaxActor
+from XuanJing.actor.actor_group.softmax_actor import SoftmaxActor
 
 
 def train_loop(envs, actor, algorithm, optimizer, args):

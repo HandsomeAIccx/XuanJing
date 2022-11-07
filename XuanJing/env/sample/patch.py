@@ -33,8 +33,8 @@ class Patch(object):
                 return len(self.__dict__[k])
 
     def add(self, patch_data):
-        assert patch_data.get_value('output')['act'].shape[
-                   0] == 1, f"act shape == {patch_data.get_value('output')['act'].shape[0]}"
+        # assert patch_data.get_value('output')['act'].shape[
+        #            0] == 1, f"act shape == {patch_data.get_value('output')['act'].shape[0]}"
         assert isinstance(patch_data, Patch), "patch_data Must Be Patch Type."
         if self.__dict__ == {}:
             for k in patch_data.__dict__.keys():
@@ -75,9 +75,15 @@ class Patch(object):
                 raise TypeError(f"Not Support {type(origin_dict[k])} type data")
         return return_dict
 
+
 if __name__ == "__main__":
-    a = {"key1": {"key2": np.zeros((2, 3))}}
-    b = {"key1": {"key2": np.zeros((2, 3))}}
-    for i in range(10):
-        Patch.concatenate_dict(a, b)
-        print(a['key1']['key2'].shape)
+    patch_instance = Patch()
+    print(patch_instance.__dict__)
+    patch_test = Patch(
+        obs=np.array((1, 2)),
+        action=np.array((1, 1)),
+        reward=np.array((1, 1)),
+        next_obs=np.array((1, 2)))
+    patch_instance.add(patch_test)
+    print(patch_instance.__dict__)
+

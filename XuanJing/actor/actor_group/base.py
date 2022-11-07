@@ -7,7 +7,7 @@
 
 
 class BaseActor(object):
-    """Sampling Data Based on Given Actor and Env
+    """sample Data Based on Given Actor and Env
 
     """
 
@@ -19,4 +19,8 @@ class BaseActor(object):
     ) -> None:
         super(BaseActor, self).__init__()
 
-    pass
+    def sample_forward(self, obs):
+        """
+        obs -> tensor type!
+        """
+        pass

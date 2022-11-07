@@ -9,7 +9,7 @@
 import torch
 import numpy as np
 
-from XuanJing.actor.base import BaseActor
+from XuanJing.actor.actor_group.base import BaseActor
 import torch.nn.functional as F
 
 

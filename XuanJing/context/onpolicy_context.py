@@ -1,30 +1,36 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2022/10/2 11:34 下午
-# @Author  : Zhiqiang He
-# @Email   : tinyzqh@163.com
-# @File    : test_acer.py
-# @Software: PyCharm
-
-
 import torch.optim
 import argparse
-import gym
 import numpy as np
 from tqdm import tqdm
 import torch
 import matplotlib.pyplot as plt
-
 from XuanJing.utils.net.common import MLP
 from XuanJing.env.sample.sampler import Sampler
-from XuanJing.algorithms.modelfree.acer import ACER
-from XuanJing.env.vector.vecbase import VectorEnv
+from XuanJing.algorithms.modelfree.ppo import PPO
 from XuanJing.enhancement.advantage import enhance_advantage
 from XuanJing.actor.actor_group.softmax_actor import SoftmaxActor
+from XuanJing.env.env_group.pipenv import get_environment
 
 
-def train_loop(envs, actor, algorithm, optimizer, args):
+def onpolicy_context(
+        args
+):
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+
+    envs = get_environment(args=args)
+
+    actor_net = MLP(
+        input_dim=int(np.prod(envs.observation_space.shape)),
+        output_dim=int(np.prod(envs.action_space.n)),
+        hidden_sizes=args.actor_net,
+    )
+    actor = SoftmaxActor(actor_net, envs, args)
+
+    optimizer = torch.optim.Adam(actor_net.parameters(), lr=args.lr)
+
     sampler = Sampler(actor=actor, env=envs, args=args)
-    agent = algorithm(actor, optimizer, args)
+    agent = PPO(actor, optimizer, args)
     for i in range(10):
         with tqdm(total=int(args.num_episodes / 10), desc="Iteration %d" % i) as pbar:
             for i_episode in range(int(args.num_episodes / 10)):
@@ -35,10 +41,9 @@ def train_loop(envs, actor, algorithm, optimizer, args):
                 pbar.update(1)
     plt.plot(sampler.episodes_reward)
     plt.show()
-    return None
 
 
-def dqn_args():
+def ppo_args():
     parser = argparse.ArgumentParser()
     # env
     parser.add_argument("--task", type=str, default="CartPole-v0")
@@ -62,25 +67,6 @@ def dqn_args():
 
 
 if __name__ == "__main__":
-    dqn_args = dqn_args()
-    np.random.seed(dqn_args.seed)
-    torch.manual_seed(dqn_args.seed)
+    ppo_args = ppo_args()
+    onpolicy_context(ppo_args)
 
-    envs = VectorEnv([lambda: gym.make('CartPole-v0') for _ in range(dqn_args.env_num)])
-
-    actor_net = MLP(
-        input_dim=int(np.prod(envs.observation_space.shape)),
-        output_dim=int(np.prod(envs.action_space.n)),
-        hidden_sizes=dqn_args.actor_net,
-    )
-
-    actor = SoftmaxActor(actor_net, envs, dqn_args)
-    optim = torch.optim.Adam(actor_net.parameters(), lr=dqn_args.lr)
-
-    train_loop(
-        envs=envs,
-        actor=actor,
-        algorithm=ACER,
-        optimizer=optim,
-        args=dqn_args
-    )

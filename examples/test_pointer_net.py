@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from XuanJing.algorithms.offline.combinatorial_rl import CombinatorialRL
 from XuanJing.utils.net.pointer_net import PointerNet
-from XuanJing.gamecore.co_gc.tsp_env import TspEnv
+from XuanJing.gamecore.optimisations.tsp_env import TspEnv
 
 
 def train_loop(env, actor_net, algorithm, optimizer, args):
