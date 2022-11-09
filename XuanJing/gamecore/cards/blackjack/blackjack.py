@@ -1,15 +1,34 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2022/11/8 8:52 下午
-# @Author  : Zhiqiang He
-# @Email   : tinyzqh@163.com
-# @File    : blackjack.py
-# @Software: PyCharm
-
 import gym
 import numpy as np
 from gym import spaces
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    SupportsFloat,
+    Tuple,
+    TypeVar,
+    Union,
+)
+
+ObsType = TypeVar("ObsType")
 
 from XuanJing.gamecore.cards.blackjack.dealer import BlackjackDealer
+
+
+def usable_ace(hands):  # Does this hand have a usable ace?
+    hand_num = [hand.rank_value for hand in hands]
+    return 1 in hand_num and sum(hand_num) + 10 <= 21
+
+
+def sum_hand(hands):  # Return current hand total
+    hand_num = [hand.rank_value for hand in hands]
+    if 1 in hand_num and sum(hand_num) + 10 <= 21:  # exit Ace, and use Ace as 11 < 21.
+        return sum(hand_num) + 10
+    return sum(hand_num)
 
 
 class BlackJackEnv(gym.Env):
@@ -22,17 +41,22 @@ class BlackJackEnv(gym.Env):
         self.dealer_hand = []
         self.dealer_up_card = None
 
-        self.reward_options = {"lose": -100, "tie": 0, "win": 100}
-
         # hit = 0, stand = 1
         self.action_space = spaces.Discrete(2)
-
-        self.observation_space = spaces.Tuple((spaces.Discrete(18), spaces.Discrete(10)))
+        self.observation_space = spaces.Tuple(
+            (spaces.Discrete(32), spaces.Discrete(11), spaces.Discrete(2))
+        )
         self.done = False
 
-    def reset(self):
+    def reset(
+            self,
+            seed: Optional[int] = None,
+            return_info: bool = False,
+            options: Optional[dict] = None,
+    ) -> Union[ObsType, Tuple[ObsType, dict]]:
+
         self.bj_dealer.cards += self.player_hand + self.dealer_hand
-        assert len(self.bj_dealer.cards) == self.deck_num * 54, "Incomplete Recovery Deck Number！"
+        assert len(self.bj_dealer.cards) == self.deck_num * 52, "Incomplete Recovery Deck Number！"
         self.bj_dealer.shuffle()
 
         self.done = False
@@ -40,97 +64,32 @@ class BlackJackEnv(gym.Env):
         self.player_hand = [self.bj_dealer.deal(), self.bj_dealer.deal()]
         self.dealer_hand = [self.bj_dealer.deal(), self.bj_dealer.deal()]
         self.dealer_up_card = self.dealer_hand[0]
-
-        # calculate the value of the agent's hand.
-        self.player_value = self._compute_bj_card_value(self.player_hand)
-
-        # This makes the possible range of 2 through 20 into 1 through 18
-        player_value_obs = self.player_value - 2
-
-        # Subtract by 1 to fit the possible observation range of 1 to 10.
-        upcard_value_obs = self._compute_bj_card_value([self.dealer_upcard]) - 1
-        obs = np.array([player_value_obs, upcard_value_obs])
-        return obs
-
-    def _take_action(self, action):
-        if action == 0:  # hit
-            self.player_hand.append(self.bj_dealer.deal())
-
-        self.player_value = self._compute_bj_card_value(self.player_hand)
+        return self._get_obs(), {}
 
     def step(self, action):
-        self._take_action()
+        assert self.action_space.contains(action), f"{action} is not contain in action space!"
 
-        self.done = action == 1 or self.player_value >= 21
-
-        rewards = 0
-        if self.done:
-            if self.player_value > 21:  # above 21, player loses automatically.
-                rewards = self.reward_options["lose"]
-            elif self.player_value == 21:  # blackjack! Player wins automatically.
-                rewards = self.reward_options["win"]
+        if action:  # hit: add card to players hand and return.
+            self.player_hand.append(self.bj_dealer.deal())
+            if sum_hand(self.player_hand) > 21:
+                terminated = True
+                reward = -1.0
             else:
-                dealer_value, self.dealer_hand, self.bj_deck = self.dealer_turn(self.dealer_hand, self.bj_deck)
+                terminated = False
+                reward = 0.0
+        else:  # stick: play out the dealers hand, and score
+            terminated = True
+            while sum_hand(self.dealer_hand) < 17:  # less 17 point, the dealer hit.
+                self.dealer_hand.append(self.bj_dealer.deal())
 
-                if dealer_value > 21:  # dealer above 21, player wins automatically
-                    rewards = self.reward_options["win"]
-                elif dealer_value == 21:  # dealer has blackjack, player loses automatically
-                    rewards = self.reward_options["lose"]
-                else:  # dealer and player have values less than 21.
-                    if self.player_value > dealer_value:  # player closer to 21, player wins.
-                        rewards = self.reward_options["win"]
-                    elif self.player_value < dealer_value:  # dealer closer to 21, dealer wins.
-                        rewards = self.reward_options["lose"]
-                    else:
-                        rewards = self.reward_options["tie"]
-        player_value_obs = self.player_value - 2
-        upcard_value_obs = self._compute_bj_card_value([self.dealer_up_card]) - 1
-        obs = np.array([player_value_obs, upcard_value_obs])
-        return obs, rewards, self.done, {}
+            player_score = 0 if sum_hand(self.player_hand) > 21 else sum_hand(self.player_hand)
+            dealer_score = 0 if sum_hand(self.dealer_hand) > 21 else sum_hand(self.dealer_hand)
+            reward = float(player_score > dealer_score) - float(player_score < dealer_score)
 
-    @staticmethod
-    def dealer_turn(dealer_hand, deck):
-        # Calculate dealer hand's value.
-        dealer_value = BlackJackEnv._compute_bj_card_value(dealer_hand)
+        return self._get_obs(), reward, terminated, False, {}
 
-        # Define dealer policy (is fixed to official rules)
+    def _get_obs(self):
+        return sum_hand(self.player_hand), self.dealer_hand[0], usable_ace(self.player_hand)
 
-        # The dealer keeps hitting until their total is 17 or more
-        while dealer_value < 17:
-            # hit
-            dealer_hand.append(deck.deal())
-            dealer_value = BlackJackEnv._compute_bj_card_value(dealer_hand)
-
-        return dealer_value, dealer_hand, deck
-
-    @staticmethod
-    def _compute_bj_card_value(hand_card):
-        """define logic for evaluating the value of the hand card."""
-        num_ace = 0
-        use_one = 0
-        for card in hand_card:
-            if card.rank_str == "ace":
-                num_ace += 1
-                use_one += card.rank_value[0]
-            else:
-                use_one += card.rank_value
-
-        if num_ace > 0:
-            ace_counter = 0
-            while ace_counter < num_ace:
-                use_eleven = use_one + 10
-                if use_eleven > 21:
-                    return use_one
-                elif use_eleven >= 18 and use_eleven <= 21:
-                    return use_eleven
-                else:
-                    use_one = use_eleven
-                ace_counter += 1
-            return use_one
-        else:
-            return use_one
-
-
-if __name__ == "__main__":
-    bj_env = BlackJackEnv()
-    print("a")
+    def close(self):
+        pass
