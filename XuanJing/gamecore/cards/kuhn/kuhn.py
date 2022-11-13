@@ -29,8 +29,8 @@ class KuhnPoker(gym.Env):
         self.cards = [1, 2, 3]
         random.shuffle(self.cards)
 
-        self.players = ["player1", "player2"]
-        random.shuffle(self.players)
+        self.players = ["player2", "player1"]
+        # random.shuffle(self.players)
         self.current_player = self.players.pop()
         self.opponent_player = self.players.pop()
 
@@ -95,13 +95,8 @@ class KuhnPoker(gym.Env):
     def _is_terminal(self):
         if len(self.history) == 3:
             return True
-        elif len(self.history) == 2:
-            if self.history[0] == 0 and self.history[1] == 0:
-                return True
-            elif self.history[0] == 1 and self.history[1] == 1:
-                return True
-            elif self.history[0] == 1 and self.history[1] == 0:
-                return True
+        elif self.history[-2:] == [0, 0] or self.history[-2:] == [1, 1] or self.history[-2:] == [1, 0]:
+            return True
         return False
 
     def _get_infoset(self):
@@ -115,6 +110,9 @@ class KuhnPoker(gym.Env):
 
     def render(self, mode="human"):
         print(self._get_infoset())
+
+    def __str__(self):
+        return self.current_player + " ".join(map(lambda x: "_" + x, map(str, self.history)))
 
 
 class InfoSet(object):
