@@ -32,9 +32,9 @@ class CFRAgent(object):
             sim_game = copy.deepcopy(game)
             sim_game.step(act)
             if player == "player1":
-                action_utils = -1 * self.cfr_search(sim_game, pr_1 * strategy[act], pr_2)
+                action_utils[act] = -1 * self.cfr_search(sim_game, pr_1 * strategy[act], pr_2)
             else:
-                action_utils = -1 * self.cfr_search(sim_game, pr_1, pr_2 * strategy[act])
+                action_utils[act] = -1 * self.cfr_search(sim_game, pr_1, pr_2 * strategy[act])
 
         # Utility of Information Set.
         util = sum(action_utils * strategy)
@@ -113,12 +113,13 @@ if __name__ == "__main__":
     agent = CFRAgent()
     done, reward, obs = env.reset()
     print("Start New Game!")
-    for i in range(10000):
-        env.render()
+    for i in range(25000):
+        # env.render()
         action = agent.take_action(env)
-        done, reward, obs = env.step(action)
-        if done:
-            print("Game Done! Reward is : ", reward)
-            env.reset()
-            print("Start New Game!")
+        # done, reward, obs = env.step(action)
+        env.reset()
+        # if done:
+        #     print("Game Done! Reward is : ", reward)
+        #     env.reset()
+        #     print("Start New Game!")
     display_results(agent.node_map)

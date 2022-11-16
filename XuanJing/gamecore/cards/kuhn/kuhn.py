@@ -30,7 +30,7 @@ class KuhnPoker(gym.Env):
         random.shuffle(self.cards)
 
         self.players = ["player2", "player1"]
-        # random.shuffle(self.players)
+        random.shuffle(self.players)
         self.current_player = self.players.pop()
         self.opponent_player = self.players.pop()
 
@@ -112,7 +112,11 @@ class KuhnPoker(gym.Env):
         print(self._get_infoset())
 
     def __str__(self):
-        return self.current_player + " ".join(map(lambda x: "_" + x, map(str, self.history)))
+        history_map = {
+            0: "p",
+            1: "b"
+        }
+        return str(self.player_hand[self.current_player]) + " " + "".join(map(lambda x: history_map[x], self.history))
 
 
 class InfoSet(object):
