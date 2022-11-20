@@ -8,6 +8,7 @@
 
 import torch
 from torch import Tensor
+import numpy as np
 
 from XuanJing.utils.torch_utils import to_torch
 import torch.nn.functional as F
@@ -50,7 +51,7 @@ class PPO(object):
             advantage = gamma * lmbda * advantage + delta
             advantage_list.append(advantage)
         advantage_list.reverse()
-        return torch.tensor(advantage_list, dtype=torch.float)
+        return torch.tensor(np.array(advantage_list), dtype=torch.float)
 
     def updata_parameter(
             self,
