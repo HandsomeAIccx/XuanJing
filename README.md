@@ -8,9 +8,9 @@
 **XuanJing** is a benchmark library of decision algorithms for reinforcement learning, imitation learning,
 multi-agent learning and planning algorithms.
 
-Whether it is supervised learning or reinforcement learning, 
-the algorithm consists of two main parts: the data and the update formula.
-XuanJing abstracts these two parts so that it is possible to train reinforcement 
+In both supervised learning and reinforcement learning, the algorithm consists of two main components.
+: the data and the update formula.
+XuanJing abstracts these two parts, so that it is possible to train reinforcement 
 learning algorithms in the same way as supervised learning.
 
 ## Status
