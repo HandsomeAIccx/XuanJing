@@ -97,7 +97,7 @@ Made with [contributors-img](https://contrib.rocks/preview?repo=tinyzqh%2FXuanJi
 
 ## Citation
 
-If you find MARS useful, please cite it in your publications.
+If you find XuanJing useful, please cite it in your publications.
 
 ```
 @software{XuanJing,
