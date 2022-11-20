@@ -27,16 +27,18 @@ class Sampler(object):
         self.episode_reward = 0
         self.episodes_reward = []
         self.episode_done = False
+        self.logging = {}
 
     def sample_episode(self, n_episode=0):
         assert n_episode > 0, "episode len must > 0!"
         cur_episode = 0
+        episode_reward = 0
         obs = self.env.reset()
         while True:
             actor_out = self.actor.sample_forward(obs)
             action = actor_out['act']
             obs_next, reward, done, info = self.env.step(action)
-            self.episode_reward += reward[0]
+            episode_reward += reward[0]
             self.patch_data.add(
                 Patch(
                     obs=obs,
@@ -50,10 +52,14 @@ class Sampler(object):
                 cur_episode += 1
                 obs_next = self.env.reset()
                 self.episodes_reward.append(self.episode_reward)
-                self.episode_reward = 0
+
             if cur_episode >= n_episode:
                 break
             obs = obs_next
+
+        self.logging.update({
+            "Sample/avg_episode_reward": episode_reward / n_episode
+        })
 
     def sample_step(self, n_step=0):
         assert n_step > 0, "n_step len must > 0!"

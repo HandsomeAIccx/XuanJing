@@ -3,7 +3,7 @@ import gym
 from XuanJing.env.vector.vecbase import VectorEnv
 
 
-def get_environment(args):
+def env_vector(args):
     """
     # TODO 环境的输入输出维度，sample函数等功能。基于env和给定网络类型直接实例化网络。
     # TODO env seed, env id的设定。

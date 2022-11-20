@@ -7,6 +7,8 @@
 
 
 import torch
+from torch import Tensor
+
 from XuanJing.utils.torch_utils import to_torch
 import torch.nn.functional as F
 
@@ -37,6 +39,8 @@ class PPO(object):
         self.critic_optim = torch.optim.Adam(self.critic_net.parameters(), lr=1e-2)
         self.args = args
         self.learn_step = 0
+        self.criterion = torch.nn.SmoothL1Loss()
+        self.logging = {}
 
     def compute_advantage(self, gamma, lmbda, td_delta):
         td_delta = td_delta.detach().numpy()
@@ -65,22 +69,35 @@ class PPO(object):
         advantage = self.compute_advantage(self.args.gamma, 0.95, td_delta)
         old_log_probs = torch.log(F.softmax(self.actor_net(obs), dim=1).gather(1, actions)).detach()
 
-        for i in range(10):
+        actor_losses = 0.0
+        critic_losses = 0.0
+        for i in range(self.args.update_times):
             predict_prob = self.actor_net(obs)
             softmax_probs = F.softmax(predict_prob, dim=1)
             log_prob = torch.log(softmax_probs).gather(1, actions)
 
             ratio = torch.exp(log_prob - old_log_probs)
-            surr1 = ratio * advantage
-            surr2 = torch.clamp(ratio, 1 - 0.2, 1 + 0.2) * advantage
+            surrogate1 = ratio * advantage
+            surrogate2 = torch.clamp(ratio, 1 - 0.2, 1 + 0.2) * advantage
 
-            actor_loss = torch.mean(- torch.min(surr1, surr2))
+            actor_loss = -torch.min(surrogate1, surrogate2).mean()
+            # critic_loss = self.criterion(self.critic_net(obs), td_target.detach())
+            critic_loss = F.mse_loss(self.critic_net(obs), td_target.detach()).mean()
 
-            critic_loss = torch.mean(F.mse_loss(self.critic_net(obs), td_target.detach()))
+            self.optimizer_update(self.actor_optim, actor_loss)
+            self.optimizer_update(self.critic_optim, critic_loss)
 
-            self.actor_optim.zero_grad()
-            self.critic_optim.zero_grad()
-            actor_loss.backward()
-            critic_loss.backward()
-            self.actor_optim.step()
-            self.critic_optim.step()
+            actor_losses += actor_loss.item()
+            critic_losses += critic_loss.item()
+
+        # anything you want to recorder!
+        self.logging.update({
+            "Learn/actor_losses": actor_losses / self.args.update_times,
+            "Learn/critic_losses": critic_losses / self.args.update_times
+        })
+
+    @staticmethod
+    def optimizer_update(optimizer, loss: Tensor):
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()

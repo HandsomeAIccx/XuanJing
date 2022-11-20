@@ -75,3 +75,9 @@ class DoubleDQN(nn.Module):
     def sync_weight(self):
         self.target_actor_net.load_state_dict(self.actor_net.state_dict())
 
+    @staticmethod
+    def soft_sync_weight(target_net: torch.nn.Module, current_net: torch.nn.Module, tau: float):
+        # assert target_net is not current_net
+        for tar, cur in zip(target_net.parameters(), current_net.parameters()):
+            tar.data.copy_(cur.data * tau + tar.data * (1.0 - tau))
+

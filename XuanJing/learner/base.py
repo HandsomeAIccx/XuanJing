@@ -6,15 +6,9 @@
 # @Software: PyCharm
 
 class BaseLearner(object):
-    """
+    @staticmethod
+    def save_logging(writer, log_data, step):
+        assert isinstance(log_data, dict), f"input type {type(log_data)} is not a dict!"
+        for k, v in log_data.items():
+            writer.add_scalar(k, v, step)
 
-    """
-    def __init__(
-            self,
-            model,
-            buffer,
-            optimizer,
-            algorithm,
-            args
-    ):
-        pass
