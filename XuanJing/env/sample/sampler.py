@@ -93,7 +93,6 @@ class Sampler(object):
             if cur_step >= n_step:
                 break
 
-
     def get_episode_result(self):
         return {"episodes_reward": self.episodes_reward}
 
