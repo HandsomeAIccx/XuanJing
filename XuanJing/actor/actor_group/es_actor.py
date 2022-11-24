@@ -19,7 +19,7 @@ class EsActor(BaseActor):
         output = {}
         if not isinstance(obs, torch.Tensor):
             obs = torch.Tensor(obs)
-
-        action = 1 if (self.actor_net[0] * obs).sum() > 0 else 0
+        action = np.argmax(self.actor_net(obs).detach().numpy())
+        # action = 1 if (self.actor_net[0] * obs).sum() > 0 else 0
         output['act'] = np.array([action])
         return output

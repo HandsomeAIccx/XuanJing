@@ -6,11 +6,8 @@ import numpy as np
 import torch.nn as nn
 from tqdm import tqdm
 from XuanJing.utils.net.common import MLP
-from XuanJing.utils.net.linear import ThreeLayerNetwork
-from joblib import delayed
-from joblib import Parallel
-from copy import deepcopy
-from collections import defaultdict
+import copy
+
 env = gym.make("CartPole-v0")
 """
 "Implementation of "Evolution Strategies as a Scalable Alternative to Reinforcement Learning"
@@ -21,6 +18,7 @@ from XuanJing.env.build_env import env_vector
 from XuanJing.env.sample.sampler import Sampler
 from XuanJing.actor.actor_group.es_actor import EsActor
 from XuanJing.enhancement.advantage import enhance_advantage
+
 
 class EsAgent(object):
     def __init__(self,
@@ -45,38 +43,19 @@ class EsAgent(object):
         self.actor_net.from_vec(parameters)
         self.lr *= 0.992354
 
-def rewardFunction(param, args):
-    nn = MLP(
-        input_dim=int(np.prod(env.observation_space.shape)),
-        output_dim=int(np.prod(env.action_space.n)),
-        hidden_sizes=args.actor_net,
-    )
-    nn.from_vec(param)
-    totalRewards=[]
-    for i in range(10):
-        done=False
-        state=env.reset()
-        rewards=0
-        while not done:
-            state = torch.tensor(state, dtype=torch.float)
-            net_out = nn(state)
-            action = np.argmax(net_out.detach().numpy())
-            # action=NN.state2Value(state)
-            nextState,reward,done,info=env.step(action)
-            rewards+=reward
-            state=nextState
-        totalRewards.append(rewards)
-    return sum(totalRewards)/len(totalRewards)
 
 def build_train(args):
 
-    # env = env_vector(args=args)
+    env = env_vector(args=args)
 
     actor_net = MLP(
         input_dim=int(np.prod(env.observation_space.shape)),
         output_dim=int(np.prod(env.action_space.n)),
         hidden_sizes=args.actor_net,
     )
+    actor = EsActor(actor_net, env, args)
+    sampler = Sampler(actor=actor, env=env, args=args)
+
     agent = EsAgent(
         actor_net
     )
@@ -89,11 +68,14 @@ def build_train(args):
         parameters = agent.actor_net.to_vec()
         for i in range(args.population_size):
             spring = parameters + springs[i]
-            reward[i] = rewardFunction(spring, args)
+            new_net = copy.deepcopy(actor_net)
+            new_net.from_vec(spring)
+            sampler.replace_actor(new_net)
+            episode_rewards, patch_data = sampler.sample_episode(10)
+            reward[i] = sum(episode_rewards) / len(episode_rewards)
         advantage = (reward - reward.mean()) / reward.std()
         agent.update_net(advantage, args.population_size, noise)
         print(f"generation: {session} Average Reward: {reward.mean()} Best reward:{max(reward)}")
-
 
 
 def es_args():

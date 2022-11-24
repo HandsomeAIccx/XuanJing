@@ -7,7 +7,6 @@
 
 from XuanJing.env.sample.patch import Patch
 import copy
-import numpy as np
 
 
 class Sampler(object):
@@ -32,14 +31,16 @@ class Sampler(object):
     def sample_episode(self, n_episode=0):
         assert n_episode > 0, "episode len must > 0!"
         cur_episode = 0
+        episodes_reward = []
         episode_reward = 0
+        patch_data = Patch()
         obs = self.env.reset()
         while True:
             actor_out = self.actor.sample_forward(obs)
             action = actor_out['act']
             obs_next, reward, done, info = self.env.step(action)
             episode_reward += reward[0]
-            self.patch_data.add(
+            patch_data.add(
                 Patch(
                     obs=obs,
                     output=actor_out,
@@ -51,15 +52,13 @@ class Sampler(object):
             if done:
                 cur_episode += 1
                 obs_next = self.env.reset()
-                self.episodes_reward.append(self.episode_reward)
+                episodes_reward.append(episode_reward)
+                episode_reward = 0
 
             if cur_episode >= n_episode:
                 break
             obs = obs_next
-
-        self.logging.update({
-            "Sample/avg_episode_reward": episode_reward / n_episode
-        })
+        return episodes_reward, patch_data
 
     def sample_step(self, n_step=0):
         assert n_step > 0, "n_step len must > 0!"
@@ -100,3 +99,6 @@ class Sampler(object):
         patch_data = copy.copy(self.patch_data)
         self.patch_data.clear()
         return patch_data
+
+    def replace_actor(self, actor):
+        self.actor.actor_net = actor
