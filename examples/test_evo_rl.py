@@ -45,22 +45,28 @@ class EsAgent(object):
         self.actor_net.from_vec(parameters)
         self.lr *= 0.992354
 
-def rewardFunction(nn):
-  totalRewards=[]
-  for i in range(10):
-    done=False
-    state=env.reset()
-    rewards=0
-    while not done:
-        state = torch.tensor(state, dtype=torch.float)
-        net_out = nn(state)
-        action = np.argmax(net_out.detach().numpy())
-        # action=NN.state2Value(state)
-        nextState,reward,done,info=env.step(action)
-        rewards+=reward
-        state=nextState
-    totalRewards.append(rewards)
-  return sum(totalRewards)/len(totalRewards)
+def rewardFunction(param, args):
+    nn = MLP(
+        input_dim=int(np.prod(env.observation_space.shape)),
+        output_dim=int(np.prod(env.action_space.n)),
+        hidden_sizes=args.actor_net,
+    )
+    nn.from_vec(param)
+    totalRewards=[]
+    for i in range(10):
+        done=False
+        state=env.reset()
+        rewards=0
+        while not done:
+            state = torch.tensor(state, dtype=torch.float)
+            net_out = nn(state)
+            action = np.argmax(net_out.detach().numpy())
+            # action=NN.state2Value(state)
+            nextState,reward,done,info=env.step(action)
+            rewards+=reward
+            state=nextState
+        totalRewards.append(rewards)
+    return sum(totalRewards)/len(totalRewards)
 
 def build_train(args):
 
@@ -74,24 +80,18 @@ def build_train(args):
     agent = EsAgent(
         actor_net
     )
-    config = {}
-    log = defaultdict(list)
-    config["env_steps"] = 200
-    rewards = []
-    parameters = agent.actor_net.to_vec()
+
     for session in range(args.n_sessions):
     # for session in tqdm(range(args.n_sessions)):
         reward = torch.zeros(args.population_size)
         noise = torch.randn(args.population_size, agent.param_size)
         springs = noise * 0.1
+        parameters = agent.actor_net.to_vec()
         for i in range(args.population_size):
             spring = parameters + springs[i]
-            agent.update_actor_para(spring)
-            reward[i] = rewardFunction(agent.actor_net)
-        rewards.append(reward.mean())
+            reward[i] = rewardFunction(spring, args)
         advantage = (reward - reward.mean()) / reward.std()
-        parameters = parameters + 0.01 / (args.population_size * 0.1) * torch.matmul(noise.T, advantage)
-        # agent.update_net(advantage, args.population_size, noise)
+        agent.update_net(advantage, args.population_size, noise)
         print(f"generation: {session} Average Reward: {reward.mean()} Best reward:{max(reward)}")
 
 
