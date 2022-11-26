@@ -1,11 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2022/9/24 11:37 上午
-# @Author  : Zhiqiang He
-# @Email   : tinyzqh@163.com
-# @File    : test_ppo.py
-# @Software: PyCharm
-
-
 import torch
 import argparse
 import numpy as np

@@ -1,11 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2022/9/24 11:42 上午
-# @Author  : Zhiqiang He
-# @Email   : tinyzqh@163.com
-# @File    : advantage.py
-# @Software: PyCharm
-
-
 from XuanJing.env.sample.patch import Patch
 import numpy as np
 

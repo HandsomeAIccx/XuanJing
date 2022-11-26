@@ -1,1 +1,8 @@
-torch
+torch~=1.12.1
+gym~=0.21.0
+numpy~=1.22.2
+matplotlib~=3.4.2
+tqdm~=4.64.1
+tensorboardx~=2.5.1
+typing_extensions~=4.4.0
+pandas~=1.2.4

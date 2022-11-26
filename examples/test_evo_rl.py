@@ -1,47 +1,28 @@
 import argparse
-
-import gym
-import torch
 import numpy as np
-import torch.nn as nn
-from tqdm import tqdm
 from XuanJing.utils.net.common import MLP
-import copy
-
-env = gym.make("CartPole-v0")
-"""
-"Implementation of "Evolution Strategies as a Scalable Alternative to Reinforcement Learning"
-ref: https://github.com/hoang-tn-nguyen/Evolutionary-Strategies
-"""
-
 from XuanJing.env.build_env import env_vector
-from XuanJing.env.sample.sampler import Sampler
 from XuanJing.actor.actor_group.es_actor import EsActor
-from XuanJing.enhancement.advantage import enhance_advantage
+from XuanJing.algorithms.es.openai_es import EsAgent
+from XuanJing.learner.espolicy import PipeLearner
 
 
-class EsAgent(object):
-    def __init__(self,
-                 actor_net):
-        self.actor_net = actor_net
-        self.sigma = 0.1
-        self.lr = 0.01
-        self.param_size = self.actor_net.to_vec().shape[0]
+def es_args():
+    parser = argparse.ArgumentParser()
+    # env
+    parser.add_argument("--task", type=str, default="CartPole-v0")
+    parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--env_num", type=int, default=1)
+    # agent
+    parser.add_argument('--actor_net', type=list, default=[128])
+    parser.add_argument("--num_episodes", type=int, default=10)
+    parser.add_argument("--n_sessions", type=int, default=50)
+    parser.add_argument("--population_size", type=int, default=50)
+    parser.add_argument("--learning_rate", type=float, default=0.01)
+    parser.add_argument("--sigma", type=float, default=0.1)
 
-    def generate_population(self, population_size):
-        parameters = self.actor_net.to_vec()
-        noise = torch.randn(population_size, parameters.shape[0])
-        springs = noise * self.sigma
-        return springs + parameters, noise
-
-    def update_actor_para(self, param):
-        self.actor_net.from_vec(param)
-
-    def update_net(self, adv, population_size, noise):
-        parameters = self.actor_net.to_vec()
-        parameters = parameters + self.lr / (population_size * self.sigma) * torch.matmul(noise.T, adv)
-        self.actor_net.from_vec(parameters)
-        self.lr *= 0.992354
+    args = parser.parse_known_args()[0]
+    return args
 
 
 def build_train(args):
@@ -54,52 +35,18 @@ def build_train(args):
         hidden_sizes=args.actor_net,
     )
     actor = EsActor(actor_net, env, args)
-    sampler = Sampler(actor=actor, env=env, args=args)
-
     agent = EsAgent(
-        actor_net
+        actor_net,
+        args
+    )
+    PipeLearner.run(
+        args,
+        env,
+        actor,
+        agent
     )
 
-    for session in range(args.n_sessions):
-    # for session in tqdm(range(args.n_sessions)):
-        reward = torch.zeros(args.population_size)
-        noise = torch.randn(args.population_size, agent.param_size)
-        springs = noise * 0.1
-        parameters = agent.actor_net.to_vec()
-        for i in range(args.population_size):
-            spring = parameters + springs[i]
-            new_net = copy.deepcopy(actor_net)
-            new_net.from_vec(spring)
-            sampler.replace_actor(new_net)
-            episode_rewards, patch_data = sampler.sample_episode(10)
-            reward[i] = sum(episode_rewards) / len(episode_rewards)
-        advantage = (reward - reward.mean()) / reward.std()
-        agent.update_net(advantage, args.population_size, noise)
-        print(f"generation: {session} Average Reward: {reward.mean()} Best reward:{max(reward)}")
-
-
-def es_args():
-    parser = argparse.ArgumentParser()
-    # env
-    parser.add_argument("--task", type=str, default="CartPole-v0")
-    parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--env_num", type=int, default=1)
-    # agent
-    parser.add_argument('--actor_net', type=list, default=[128])
-    parser.add_argument("--num_episodes", type=int, default=500)
-    parser.add_argument("--n_sessions", type=int, default=50)
-    parser.add_argument("--learning_rate", type=float, default=0.01)
-    parser.add_argument("--noise_std", type=float, default=0.05)
-    parser.add_argument("--population_size", type=int, default=50)
-
-    args = parser.parse_known_args()[0]
-    return args
 
 if __name__ == "__main__":
     es_args = es_args()
     build_train(es_args)
-
-
-
-
-
