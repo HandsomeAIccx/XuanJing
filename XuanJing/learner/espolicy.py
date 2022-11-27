@@ -27,7 +27,7 @@ class PipeLearner(BaseLearner):
                 episodes_patch = sampler.sample_episode(args.num_episodes)
                 episodes_reward = enhance_get_episode_reward(episodes_patch)
                 population_reward[i] = sum(episodes_reward) / len(episodes_reward)
-            agent.update_net(population_reward)
+            agent.update_net(population_reward, parameters)
             tqdm_range.set_postfix({"Generation": f"{session}",
                                     "AverageReward": f"{population_reward.mean()}",
                                     "BestReward": f"{max(population_reward)}"})

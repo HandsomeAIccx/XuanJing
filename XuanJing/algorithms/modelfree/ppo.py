@@ -10,7 +10,7 @@ import torch
 from torch import Tensor
 import numpy as np
 
-from XuanJing.utils.torch_utils import to_torch
+from XuanJing.utils.torch_utils import tensorify
 import torch.nn.functional as F
 
 
@@ -57,11 +57,11 @@ class PPO(object):
             self,
             train_data
     ):
-        obs = to_torch(train_data.get_value("obs"))
-        actions = to_torch(train_data.get_value("output")["act"]).view(-1, 1)
-        next_obs = to_torch(train_data.get_value("next_obs"))
-        rewards = to_torch(train_data.get_value("reward")).view(-1, 1)
-        done = to_torch(train_data.get_value("done")).view(-1, 1)
+        obs = tensorify(train_data.get_value("obs"))
+        actions = tensorify(train_data.get_value("output")["act"]).view(-1, 1)
+        next_obs = tensorify(train_data.get_value("next_obs"))
+        rewards = tensorify(train_data.get_value("reward")).view(-1, 1)
+        done = tensorify(train_data.get_value("done")).view(-1, 1)
 
         # TD
         td_target = rewards + self.args.gamma * self.critic_net(next_obs) * (1 - done)

@@ -11,7 +11,6 @@ class EsAgent(object):
         self.actor_net = actor_net
         self.sigma = args.sigma
         self.lr = args.learning_rate
-        self.param_size = self.actor_net.to_vec().shape[0]
         self.population_size = args.population_size
         self.noise = None
 
@@ -27,6 +26,7 @@ class EsAgent(object):
     def update_net(self, population_reward):
         adv = (population_reward - population_reward.mean()) / population_reward.std()
         parameters = self.actor_net.to_vec()
+        # Tips: self.noise just the last population's noise.
         parameters = parameters + self.lr / (self.population_size * self.sigma) * torch.matmul(self.noise.T, adv)
         self.actor_net.from_vec(parameters)
         self.lr *= 0.9992354

@@ -9,9 +9,9 @@ import numpy as np
 import torch
 
 
-def to_torch(data):
+def tensorify(data):
     if isinstance(data, dict):
-        return {k: to_torch(v) for k, v in data.items()}
+        return {k: tensorify(v) for k, v in data.items()}
     elif isinstance(data, np.ndarray):
         if data.dtype in [np.int64, int]:
             return torch.tensor(data, dtype=torch.int64)
@@ -23,11 +23,11 @@ def to_torch(data):
         return ValueError(f"Not Support type {type(data)}")
 
 
-def to_numpy(data):
+def numpyify(data):
     if isinstance(data, dict):
-        return {k: to_numpy(v) for k, v in data.items()}
+        return {k: numpyify(v) for k, v in data.items()}
     elif isinstance(data, list):
-        return [to_numpy(i) for i in data]
+        return [numpyify(i) for i in data]
     elif isinstance(data, torch.Tensor):
         return data.detach().cpu().numpy()
     else:

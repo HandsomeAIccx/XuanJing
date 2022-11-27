@@ -9,7 +9,7 @@
 import copy
 import torch
 import numpy as np
-from XuanJing.utils.torch_utils import to_torch
+from XuanJing.utils.torch_utils import tensorify
 from XuanJing.buffer.replaybuffer import ReplayBuffer
 import torch.nn.functional as F
 
@@ -74,11 +74,11 @@ class SAC(object):
             return
 
         batch_data = self.replay_buffer.random_pop(self.args.batch_size)
-        obs = to_torch(batch_data.get_value("obs"))
-        actions = to_torch(batch_data.get_value("output")["act"]).view(-1, 1)
-        next_obs = to_torch(batch_data.get_value("next_obs"))
-        rewards = to_torch(batch_data.get_value("reward")).view(-1, 1)
-        done = to_torch(batch_data.get_value("done")).view(-1, 1)
+        obs = tensorify(batch_data.get_value("obs"))
+        actions = tensorify(batch_data.get_value("output")["act"]).view(-1, 1)
+        next_obs = tensorify(batch_data.get_value("next_obs"))
+        rewards = tensorify(batch_data.get_value("reward")).view(-1, 1)
+        done = tensorify(batch_data.get_value("done")).view(-1, 1)
 
         #
         # 更新两个Q网络

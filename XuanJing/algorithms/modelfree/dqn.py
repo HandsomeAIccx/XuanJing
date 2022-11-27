@@ -11,7 +11,7 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 from XuanJing.buffer.replaybuffer import ReplayBuffer
-from XuanJing.utils.torch_utils import to_torch
+from XuanJing.utils.torch_utils import tensorify
 
 
 class DQN(nn.Module):
@@ -39,11 +39,11 @@ class DQN(nn.Module):
             return
         batch_data = self.replay_buffer.random_pop(self.args.batch_size)
 
-        obs = to_torch(batch_data.get_value("obs"))
-        actions = to_torch(batch_data.get_value("output")["act"]).view(-1, 1)
-        next_obs = to_torch(batch_data.get_value("next_obs"))
-        reward = to_torch(batch_data.get_value("reward")).view(-1, 1)
-        done = to_torch(batch_data.get_value("done")).view(-1, 1)
+        obs = tensorify(batch_data.get_value("obs"))
+        actions = tensorify(batch_data.get_value("output")["act"]).view(-1, 1)
+        next_obs = tensorify(batch_data.get_value("next_obs"))
+        reward = tensorify(batch_data.get_value("reward")).view(-1, 1)
+        done = tensorify(batch_data.get_value("done")).view(-1, 1)
 
         q_values = self.actor_net(obs).gather(1, actions)
         max_next_q_values = self.target_actor_net(next_obs).max(1)[0].view(-1, 1)

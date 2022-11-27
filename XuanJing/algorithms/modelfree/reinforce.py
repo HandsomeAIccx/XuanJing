@@ -6,7 +6,7 @@
 # @Software: PyCharm
 
 import torch
-from XuanJing.utils.torch_utils import to_torch
+from XuanJing.utils.torch_utils import tensorify
 import torch.nn.functional as F
 
 
@@ -26,11 +26,11 @@ class Reinforce(object):
             self,
             train_data
     ):
-        obs = to_torch(train_data.get_value("obs"))
-        actions = to_torch(train_data.get_value("output")["act"]).view(-1, 1)
-        next_obs = to_torch(train_data.get_value("next_obs"))
-        rewards = to_torch(train_data.get_value("reward")).view(-1, 1)
-        done = to_torch(train_data.get_value("done")).view(-1, 1)
+        obs = tensorify(train_data.get_value("obs"))
+        actions = tensorify(train_data.get_value("output")["act"]).view(-1, 1)
+        next_obs = tensorify(train_data.get_value("next_obs"))
+        rewards = tensorify(train_data.get_value("reward")).view(-1, 1)
+        done = tensorify(train_data.get_value("done")).view(-1, 1)
 
         G = 0
         self.optim.zero_grad()

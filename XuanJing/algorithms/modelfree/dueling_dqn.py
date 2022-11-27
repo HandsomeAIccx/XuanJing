@@ -12,17 +12,7 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 from XuanJing.buffer.replaybuffer import ReplayBuffer
-
-def to_torch(data):
-    if isinstance(data, dict):
-        return {k: to_torch(v) for k, v in data.items()}
-    elif isinstance(data, np.ndarray):
-        if data.dtype == int:
-            return torch.tensor(data, dtype=torch.int64)
-        else:
-            return torch.tensor(data, dtype=torch.float)
-    else:
-        return ValueError(f"Not Support type {type(data)}")
+from XuanJing.utils.torch_utils import tensorify
 
 
 class DuelingDQN(nn.Module):
@@ -50,11 +40,11 @@ class DuelingDQN(nn.Module):
             return
         batch_data = self.replay_buffer.random_pop(self.args.batch_size)
 
-        obs = to_torch(batch_data.get_value("obs"))
-        actions = to_torch(batch_data.get_value("output")["act"]).view(-1, 1)
-        next_obs = to_torch(batch_data.get_value("next_obs"))
-        reward = to_torch(batch_data.get_value("reward")).view(-1, 1)
-        done = to_torch(batch_data.get_value("done")).view(-1, 1)
+        obs = tensorify(batch_data.get_value("obs"))
+        actions = tensorify(batch_data.get_value("output")["act"]).view(-1, 1)
+        next_obs = tensorify(batch_data.get_value("next_obs"))
+        reward = tensorify(batch_data.get_value("reward")).view(-1, 1)
+        done = tensorify(batch_data.get_value("done")).view(-1, 1)
 
         q_values = self.actor_net(obs).gather(1, actions)
         max_next_q_values = self.target_actor_net(next_obs).max(1)[0].view(-1, 1)
