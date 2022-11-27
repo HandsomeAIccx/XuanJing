@@ -11,9 +11,9 @@ class RockPaperScissors(gym.Env):
         self.player_space = ["player1", "player2"]
 
         self.action_utility = [
-            [0, -1, 1],
-            [1, 0, -1],
-            [-1, 1, 0]
+            [0, -1, 2],
+            [1, 0, -2],
+            [-2, 2, 0]
         ]  # each row is going to be the user, col going to be the opponent.
 
         self.players = None

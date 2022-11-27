@@ -55,7 +55,7 @@ TODO
 
 Supported algorithms are as following:
 
-#### model free reinforcement learning
+#### model free reinforcement learning </br>
 
 - [Deep Q-Network (DQN)](https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf)
 - [Double DQN](https://arxiv.org/pdf/1509.06461.pdf)
@@ -63,17 +63,21 @@ Supported algorithms are as following:
 - [Proximal Policy Optimization (PPO)](https://arxiv.org/pdf/1707.06347.pdf)
 - [Soft Actor-Critic (SAC)](https://arxiv.org/pdf/1812.05905.pdf)
 
-#### model based reinforcement learning
+#### model based reinforcement learning </br>
 
 
-#### Imitation Learning
+#### Imitation Learning </br>
 
 
-#### planning algorithms
+#### planning algorithms </br>
 
 - [Regret Minimization in Games with Incomplete
 Information (CFR)](https://proceedings.neurips.cc/paper/2007/file/08d98638c6fcd194a4b1e6992063e944-Paper.pdf)
 
+#### evolution strategies
+
+- [Cross-Entropy Method (CEM)](http://web.mit.edu/6.454/www/www_fall_2003/gew/CEtutorial.pdf)
+- [Evolution Strategies as a Scalable Alternative to Reinforcement Learning (ES)](https://arxiv.org/abs/1703.03864)
 
 ### Example Readmes
 
