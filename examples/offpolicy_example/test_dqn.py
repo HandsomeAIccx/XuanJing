@@ -1,40 +1,12 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2022/9/18 2:05 下午
-# @Author  : Zhiqiang He
-# @Email   : tinyzqh@163.com
-# @File    : test_dqn.py
-# @Software: PyCharm
-
-import torch.optim
-import argparse
-import gym
-import numpy as np
-from tqdm import tqdm
 import torch
-import matplotlib.pyplot as plt
+import argparse
+import numpy as np
 
 from XuanJing.utils.net.common import MLP
-from XuanJing.env.sample.sampler import Sampler
 from XuanJing.algorithms.modelfree.dqn import DQN
-from XuanJing.env.vector.vecbase import VectorEnv
-from XuanJing.enhancement.next_state import enhance_next_state
 from XuanJing.actor.actor_group.epsilon_greedy_actor import EpsGreedyActor
-
-
-def train_loop(envs, actor, algorithm, optimizer, args):
-    sampler = Sampler(actor=actor, env=envs, args=args)
-    agent = algorithm(actor, optimizer, args)
-    for i in range(10):
-        with tqdm(total=int(args.num_episodes / 10), desc="Iteration %d" % i) as pbar:
-            for i_episode in range(int(args.num_episodes / 10)):
-                sampler.sample_step(n_step=1)
-                sample_data = sampler.get_sampler_data()
-                enhance_sample_data = enhance_next_state(sample_data)
-                agent.updata_parameter(enhance_sample_data)
-                pbar.update(1)
-    plt.plot(sampler.episodes_reward)
-    plt.show()
-    return None
+from XuanJing.env.build_env import env_vector
+from XuanJing.learner.offpolicy import PipeLearner
 
 
 def dqn_args():
@@ -44,7 +16,8 @@ def dqn_args():
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--env_num", type=int, default=1)
     # agent
-    parser.add_argument("--num_episodes", type=int, default=20000)
+    parser.add_argument("--alg", type=str, default="dqn")
+    parser.add_argument("--num_episodes", type=int, default=5000)
     parser.add_argument('--actor_net', type=list, default=[128])
     parser.add_argument("--epsilon", type=float, default=0.01)
     # learn
@@ -60,27 +33,28 @@ def dqn_args():
     return args
 
 
-if __name__ == "__main__":
-    dqn_args = dqn_args()
-    np.random.seed(dqn_args.seed)
-    torch.manual_seed(dqn_args.seed)
-
-    envs = VectorEnv([lambda: gym.make('CartPole-v0') for _ in range(dqn_args.env_num)])
+def build_train(args):
+    env = env_vector(args=args)
 
     actor_net = MLP(
-        input_dim=int(np.prod(envs.observation_space.shape)),
-        output_dim=int(np.prod(envs.action_space.n)),
+        input_dim=int(np.prod(env.observation_space.shape)),
+        output_dim=int(np.prod(env.action_space.n)),
         hidden_sizes=dqn_args.actor_net,
     )
 
-    actor = EpsGreedyActor(actor_net, envs, dqn_args)
-    optim = torch.optim.Adam(actor_net.parameters(), lr=dqn_args.lr)
+    actor = EpsGreedyActor(actor_net, env, dqn_args)
+    optimizer = torch.optim.Adam(actor_net.parameters(), lr=dqn_args.lr)
+    agent = DQN(actor, optimizer, args)
 
-    train_loop(
-        envs=envs,
-        actor=actor,
-        algorithm=DQN,
-        optimizer=optim,
-        args=dqn_args
+    pipeline = PipeLearner()
+    pipeline.run(
+        args,
+        env,
+        actor,
+        agent
     )
 
+
+if __name__ == "__main__":
+    dqn_args = dqn_args()
+    build_train(dqn_args)

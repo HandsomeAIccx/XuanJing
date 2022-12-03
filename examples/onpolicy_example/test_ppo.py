@@ -47,7 +47,8 @@ def build_train(args):
 
     agent = PPO(actor, optimizer, args)
 
-    PipeLearner.run(
+    pipeline = PipeLearner()
+    pipeline.run(
         args,
         env,
         actor,

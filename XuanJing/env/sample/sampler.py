@@ -26,14 +26,12 @@ class Sampler(object):
 
         episodes_patch_data = []
         for i in range(n_episode):
-            episode_reward = 0
             episode_patch_data = Patch()
             obs, done = self.env.reset(), False
             while not done:
                 actor_out = self.actor.sample_forward(obs)
                 action = actor_out['act']
                 obs_next, reward, done, info = self.env.step(action)
-                episode_reward += reward[0]
                 episode_patch_data.add(
                     Patch(
                         obs=obs,

@@ -28,14 +28,14 @@ class PipeLearner(BaseLearner):
         os.makedirs(str(run_dir), exist_ok=True)
 
         writer = tb.SummaryWriter(logdir=run_dir)
-        for i_episode in tqdm(range(args.num_episodes)):
-            sampler.sample_episode(n_episode=1)
-            sample_data = sampler.get_sampler_data()
-            enhance_sample_data = enhance_advantage(sample_data)
+        tqdm_range = tqdm(range(args.num_episodes))
+        for i_episode in tqdm_range:
+            sample_data = sampler.sample_episode(n_episode=2)
+            enhance_sample_data, episodes_reward = enhance_advantage(sample_data)
             torch.set_grad_enabled(True)
             agent.updata_parameter(enhance_sample_data)
             torch.set_grad_enabled(False)
 
             PipeLearner.save_logging(writer, agent.logging, i_episode)
-            PipeLearner.save_logging(writer, sampler.logging, i_episode)
-
+            tqdm_range.set_postfix({"Episode": f"{i_episode}",
+                                    "AverageEpisodeReward": f"{sum(episodes_reward) / len(episodes_reward)}"})
