@@ -1,0 +1,67 @@
+import torch
+import argparse
+import numpy as np
+
+from XuanJing.utils.net.common import PolicyNet
+from XuanJing.actor.actor_group.noise_actor import NoiseActor
+from XuanJing.env.build_env import env_vector
+from XuanJing.learner.sample_step import PipeLearner
+from XuanJing.algorithms.modelfree.ddpg import DDPG
+
+
+def ddpg_args():
+    parser = argparse.ArgumentParser()
+    # env
+    parser.add_argument("--task", type=str, default="Pendulum-v0")
+    parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--env_num", type=int, default=1)
+    # agent
+    parser.add_argument("--alg", type=str, default="ddpg")
+    parser.add_argument("--num_episodes", type=int, default=200)
+    parser.add_argument('--actor_net', type=list, default=[64])
+    # learn
+    parser.add_argument("--buffer_size", type=int, default=10000)
+    parser.add_argument("--start_learn_buffer_size", type=int, default=1000)
+    parser.add_argument("--actor_lr", type=float, default=3e-4)
+    parser.add_argument("--critic_lr", type=float, default=3e-3)
+    parser.add_argument("--tau", type=float, default=0.005)
+    parser.add_argument("--sigma", type=float, default=0.01)
+    parser.add_argument("--gamma", type=float, default=0.98)
+    parser.add_argument("--batch_size", type=int, default=64)
+    parser.add_argument("--update_target_interval", type=int, default=10)
+    parser.add_argument("--device", type=str,
+                        default='cuda' if torch.cuda.is_available() else 'cpu')
+    args = parser.parse_known_args()[0]
+    return args
+
+
+def build_train(args):
+    env = env_vector(args=args)
+
+    actor_net = PolicyNet(
+        input_dim=int(np.prod(env.observation_space.shape)),
+        output_dim=int(np.prod(env.action_space.shape)),
+        hidden_sizes=args.actor_net,
+        action_bound=env.action_space.high[0]
+    )
+
+    actor = NoiseActor(actor_net, env, args)
+    optimizer = torch.optim.Adam(actor_net.parameters(), lr=args.actor_lr)
+    agent = DDPG(
+        actor,
+        optimizer,
+        args
+    )
+
+    pipeline = PipeLearner()
+    pipeline.run(
+        args,
+        env,
+        actor,
+        agent
+    )
+    
+
+if __name__ == "__main__":
+    ddpg_args = ddpg_args()
+    build_train(ddpg_args)

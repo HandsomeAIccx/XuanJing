@@ -1,14 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2022/10/2 11:32 下午
-# @Author  : Zhiqiang He
-# @Email   : tinyzqh@163.com
-# @File    : acer.py
-# @Software: PyCharm
-"""
-arxiv: Sample Efficient Actor-Critic with Experience Replay
-"""
-
-
 import torch
 from XuanJing.utils.torch_utils import tensorify
 import torch.nn.functional as F
@@ -32,12 +21,16 @@ class ACER(object):
             optim,
             args
     ):
+        """
+        arxiv: Sample Efficient Actor-Critic with Experience Replay
+        """
         self.actor_net = actor.actor_net
         self.critic_net = ValueNet(state_dim=4, hidden_dim=128)
         self.actor_optim = optim
         self.critic_optim = torch.optim.Adam(self.critic_net.parameters(), lr=1e-2)
         self.args = args
         self.learn_step = 0
+        self.logging = {}
 
     def compute_advantage(self, gamma, lmbda, td_delta):
         td_delta = td_delta.detach().numpy()
@@ -85,3 +78,8 @@ class ACER(object):
             critic_loss.backward()
             self.actor_optim.step()
             self.critic_optim.step()
+
+        # anything you want to recorder!
+        self.logging.update({
+            "Learn/losses": actor_loss.item()
+        })

@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2022/9/24 8:52 上午
-# @Author  : Zhiqiang He
-# @Email   : tinyzqh@163.com
-# @File    : reinforce.py
-# @Software: PyCharm
-
 import torch
 from XuanJing.utils.torch_utils import tensorify
 import torch.nn.functional as F
@@ -21,6 +14,7 @@ class Reinforce(object):
         self.optim = optim
         self.args = args
         self.learn_step = 0
+        self.logging = {}
 
     def updata_parameter(
             self,
@@ -44,3 +38,8 @@ class Reinforce(object):
             loss = -log_prob * G
             loss.backward()
         self.optim.step()
+
+        # anything you want to recorder!
+        self.logging.update({
+            "Learn/losses": loss.item()
+        })

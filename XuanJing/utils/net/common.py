@@ -1,12 +1,5 @@
-# -*- coding: utf-8 -*-
-# @Time    : 4/10/22 11:04 PM
-# @Author  : Zhiqiang He
-# @Email   : tinyzqh@163.com
-# @File    : common.py.py
-# @Software: PyCharm
-
 import torch
-import numpy as np
+import torch.nn.functional as F
 from torch import nn
 from torch.nn.utils import vector_to_parameters
 from torch.nn.utils import parameters_to_vector
@@ -21,7 +14,6 @@ def mlpblock(
 	if activation is not None:
 		layers += [activation()]
 	return layers
-
 
 
 class Module(nn.Module):
@@ -82,3 +74,27 @@ class MLP(Module):
 		assert isinstance(obs, torch.Tensor), "Forward obs data must be Tensor."
 		return self.model(obs)
 
+
+class VAnet(torch.nn.Module):
+	def __init__(self, input_dim, hidden_dim, output_dim):
+		super(VAnet, self).__init__()
+		self.fc1 = torch.nn.Linear(input_dim, hidden_dim)
+		self.fc_A = torch.nn.Linear(hidden_dim, output_dim)
+		self.fc_v = torch.nn.Linear(hidden_dim, 1)
+
+	def forward(self, x):
+		A = self.fc_A(F.relu(self.fc1(x)))
+		V = self.fc_v(F.relu(self.fc1(x)))
+		Q = V + A - A.mean(1).view(-1, 1)
+		return Q
+
+
+class PolicyNet(torch.nn.Module):
+	def __init__(self, input_dim, hidden_sizes, output_dim, action_bound):
+		super(PolicyNet, self).__init__()
+		self.fc = MLP(input_dim, output_dim, hidden_sizes)
+		self.action_bound = action_bound  # action_bound是环境可以接受的动作最大值
+
+	def forward(self, x):
+		x = torch.tanh(self.fc(x))
+		return x * self.action_bound

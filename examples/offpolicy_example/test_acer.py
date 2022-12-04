@@ -3,8 +3,8 @@ import argparse
 import numpy as np
 
 from XuanJing.utils.net.common import MLP
-from XuanJing.algorithms.modelfree.dqn import DQN
-from XuanJing.actor.actor_group.epsilon_greedy_actor import EpsGreedyActor
+from XuanJing.algorithms.modelfree.acer import ACER
+from XuanJing.actor.actor_group.softmax_actor import SoftmaxActor
 from XuanJing.env.build_env import env_vector
 from XuanJing.learner.sample_episode import PipeLearner
 
@@ -16,8 +16,8 @@ def dqn_args():
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--env_num", type=int, default=1)
     # agent
-    parser.add_argument("--alg", type=str, default="dqn")
-    parser.add_argument("--num_episodes", type=int, default=5000)
+    parser.add_argument("--alg", type=str, default="acer")
+    parser.add_argument("--num_episodes", type=int, default=500)
     parser.add_argument('--actor_net', type=list, default=[128])
     parser.add_argument("--epsilon", type=float, default=0.01)
     # learn
@@ -42,9 +42,10 @@ def build_train(args):
         hidden_sizes=args.actor_net,
     )
 
-    actor = EpsGreedyActor(actor_net, env, args)
+    actor = SoftmaxActor(actor_net, env, args)
+
     optimizer = torch.optim.Adam(actor_net.parameters(), lr=args.lr)
-    agent = DQN(actor, optimizer, args)
+    agent = ACER(actor, optimizer, args)
 
     pipeline = PipeLearner()
     pipeline.run(

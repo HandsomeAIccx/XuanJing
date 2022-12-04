@@ -7,7 +7,7 @@ from pathlib import Path
 import tensorboardX as tb
 
 from XuanJing.env.sample.sampler import Sampler
-from XuanJing.enhancement.advantage import enhance_advantage
+from XuanJing.enhancement.next_state import enhance_next_state
 from XuanJing.learner.base import BaseLearner
 
 
@@ -30,8 +30,8 @@ class PipeLearner(BaseLearner):
         writer = tb.SummaryWriter(logdir=run_dir)
         tqdm_range = tqdm(range(args.num_episodes))
         for i_episode in tqdm_range:
-            sample_data = sampler.sample_episode(n_episode=2)
-            enhance_sample_data, episodes_reward = enhance_advantage(sample_data)
+            sample_data = sampler.sample_episode(n_episode=1)
+            enhance_sample_data, episodes_reward = enhance_next_state(sample_data)
             torch.set_grad_enabled(True)
             agent.updata_parameter(enhance_sample_data)
             torch.set_grad_enabled(False)
@@ -39,3 +39,4 @@ class PipeLearner(BaseLearner):
             PipeLearner.save_logging(writer, agent.logging, i_episode)
             tqdm_range.set_postfix({"Episode": f"{i_episode}",
                                     "AverageEpisodeReward": f"{sum(episodes_reward) / len(episodes_reward)}"})
+

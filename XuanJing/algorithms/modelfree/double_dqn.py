@@ -1,14 +1,5 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2022/9/23 11:05 下午
-# @Author  : Zhiqiang He
-# @Email   : tinyzqh@163.com
-# @File    : double_dqn.py
-# @Software: PyCharm
-
-
 import copy
 import torch
-import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 from XuanJing.buffer.replaybuffer import ReplayBuffer
@@ -29,6 +20,7 @@ class DoubleDQN(nn.Module):
         self.args = args
         self.replay_buffer = ReplayBuffer(capacity=args.buffer_size)
         self.learn_step = 0
+        self.logging = {}
 
     def updata_parameter(
             self,
@@ -60,6 +52,11 @@ class DoubleDQN(nn.Module):
             self.sync_weight()
 
         self.learn_step += 1
+
+        # anything you want to recorder!
+        self.logging.update({
+            "Learn/losses": loss.item()
+        })
 
     def sync_weight(self):
         self.target_actor_net.load_state_dict(self.actor_net.state_dict())

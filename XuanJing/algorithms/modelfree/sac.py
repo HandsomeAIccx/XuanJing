@@ -1,11 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2022/9/25 10:59 上午
-# @Author  : Zhiqiang He
-# @Email   : tinyzqh@163.com
-# @File    : sac.py
-# @Software: PyCharm
-
-
 import copy
 import torch
 import numpy as np
@@ -51,6 +43,7 @@ class SAC(object):
         self.tau = 0.005
         self.args = args
         self.learn_step = 0
+        self.logging = {}
 
     # 计算目标Q值,直接用策略网络的输出概率进行期望计算
     def calc_target(self, rewards, next_states, dones):
@@ -115,6 +108,11 @@ class SAC(object):
 
         self.soft_update(self.critic_1, self.target_critic_1)
         self.soft_update(self.critic_2, self.target_critic_2)
+
+        # anything you want to recorder!
+        self.logging.update({
+            "Learn/losses": actor_loss.item()
+        })
 
     def sync_weight(self, net, target_net):
         for param_target, param in zip(target_net.parameters(), net.parameters()):

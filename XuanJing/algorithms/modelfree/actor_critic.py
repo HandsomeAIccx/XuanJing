@@ -1,14 +1,7 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2022/9/24 9:55 上午
-# @Author  : Zhiqiang He
-# @Email   : tinyzqh@163.com
-# @File    : actor_critic.py
-# @Software: PyCharm
-
-
 import torch
 from XuanJing.utils.torch_utils import tensorify
 import torch.nn.functional as F
+
 
 class ValueNet(torch.nn.Module):
     def __init__(self, state_dim, hidden_dim):
@@ -34,6 +27,7 @@ class ActorCritic(object):
         self.critic_optim = torch.optim.Adam(self.critic_net.parameters(), lr=1e-2)
         self.args = args
         self.learn_step = 0
+        self.logging = {}
 
     def updata_parameter(
             self,
@@ -62,3 +56,8 @@ class ActorCritic(object):
         critic_loss.backward()
         self.actor_optim.step()
         self.critic_optim.step()
+
+        # anything you want to recorder!
+        self.logging.update({
+            "Learn/losses": actor_loss.item()
+        })
