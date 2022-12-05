@@ -1,11 +1,4 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2022/8/29 8:28 下午
-# @Author  : Zhiqiang He
-# @Email   : tinyzqh@163.com
-# @File    : patch.py
-# @Software: PyCharm
 import copy
-
 import numpy as np
 
 
@@ -29,8 +22,7 @@ class Patch(object):
         if len(self.__dict__) == 0:
             return 0
         else:
-            for k in self.__dict__.keys():
-                return len(self.__dict__[k])
+            return min([len(self.__dict__[k]) for k in self.__dict__.keys()])
 
     def add(self, patch_data):
         # assert patch_data.get_value('output')['act'].shape[

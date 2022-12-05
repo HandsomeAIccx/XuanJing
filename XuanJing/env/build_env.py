@@ -13,5 +13,10 @@ def env_vector(args):
     return envs
 
 
+def instance_env_vector(env_fn):
+    envs = VectorEnv([lambda: env_fn for _ in range(1)])
+    return envs
+
+
 if __name__ == "__main__":
     pass

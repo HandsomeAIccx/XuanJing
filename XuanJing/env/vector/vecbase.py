@@ -63,7 +63,14 @@ class VectorEnv(object):
         self.action_space = self.envs[0].action_space
 
     def reset(self):
-        return np.stack([e.reset() for e in self.envs])
+        obses = [e.reset() for e in self.envs]
+        if isinstance(obses[0], dict):
+            keys = list(obses[0].keys())
+            res = {}
+            for key in keys:
+                res[key] = np.stack([obs[key] for obs in obses])
+            return res
+        return np.stack(obses)
 
     def step(
             self,
@@ -71,8 +78,20 @@ class VectorEnv(object):
     ):
         assert len(action) == len(self.envs), "Env Num Error!"
         result = zip(*[e.step(a) for e, a in zip(self.envs, action)])
-        obs, reward, done, info = result
-        return map(np.stack, [obs, reward, done, info])
+        obses, reward, done, infos = result
+        if isinstance(obses[0], dict):
+            keys = list(obses[0].keys())
+            res_obs = {}
+            for key in keys:
+                res_obs[key] = np.stack([obs[key] for obs in obses])
+            res_reward = np.stack(reward)
+            res_done = np.stack(done)
+            res_info = {}
+            keys_infos = list(infos[0].keys())
+            for key_info in keys_infos:
+                res_info[key_info] = np.stack([info[key_info] for info in infos])
+            return res_obs, res_reward, res_done, res_info
+        return map(np.stack, [obses, reward, done, infos])
 
     def seed(self):
         return [self._env_fns[id].seed() for id in range(self._env_num)]

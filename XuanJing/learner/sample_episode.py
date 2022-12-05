@@ -36,6 +36,7 @@ class PipeLearner(BaseLearner):
             agent.updata_parameter(enhance_sample_data)
             torch.set_grad_enabled(False)
 
+            PipeLearner.save_logging(writer, {"reward": episodes_reward}, i_episode)
             PipeLearner.save_logging(writer, agent.logging, i_episode)
             tqdm_range.set_postfix({"Episode": f"{i_episode}",
                                     "AverageEpisodeReward": f"{sum(episodes_reward) / len(episodes_reward)}"})

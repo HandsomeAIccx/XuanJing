@@ -2,7 +2,7 @@ import torch
 import argparse
 import numpy as np
 
-from XuanJing.learner.sample_step import PipeLearner
+from XuanJing.learner.sample_episode import PipeLearner
 from XuanJing.utils.net.common import MLP
 from XuanJing.algorithms.modelfree.ppo import PPO
 from XuanJing.actor.actor_group.softmax_actor import SoftmaxActor

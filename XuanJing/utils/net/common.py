@@ -98,3 +98,21 @@ class PolicyNet(torch.nn.Module):
 	def forward(self, x):
 		x = torch.tanh(self.fc(x))
 		return x * self.action_bound
+
+
+class CarlaNet(torch.nn.Module):
+	def __init__(self, env):
+		super(CarlaNet, self).__init__()
+		self.env = env
+		self.bird_eye_shape = env.observation_space.spaces['birdeye'].shape
+		self.camera_shape = env.observation_space.spaces['camera'].shape
+		self.lidar_shape = env.observation_space.spaces['lidar'].shape
+		self.state = env.observation_space.spaces['state'].shape
+
+		# network
+		self.state_net = torch.nn.Linear(self.state[0], 2)
+		print("a")
+
+	def forward(self, x):
+		a = self.state_net(x['state'])
+		return a
