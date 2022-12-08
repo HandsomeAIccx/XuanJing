@@ -1,11 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2022/9/24 9:02 上午
-# @Author  : Zhiqiang He
-# @Email   : tinyzqh@163.com
-# @File    : softmax_actor.py
-# @Software: PyCharm
-
-
 import torch
 import numpy as np
 
@@ -34,3 +26,9 @@ class SoftmaxActor(BaseActor):
         action = action_dist.sample()
         output['act'] = np.array([action.item()])
         return output
+
+    def sample_softmax_logits(self, obs):
+        if not isinstance(obs, torch.Tensor):
+            obs = torch.Tensor(obs)
+        softmax_probs = F.softmax(self.actor_net(obs), dim=1)
+        return softmax_probs

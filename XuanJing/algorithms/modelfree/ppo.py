@@ -1,11 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2022/9/24 11:36 上午
-# @Author  : Zhiqiang He
-# @Email   : tinyzqh@163.com
-# @File    : ppo.py
-# @Software: PyCharm
-
-
 import torch
 from torch import Tensor
 import numpy as np

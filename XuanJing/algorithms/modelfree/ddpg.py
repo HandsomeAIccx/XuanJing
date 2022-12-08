@@ -18,6 +18,7 @@ class QValueNet(torch.nn.Module):
         x = F.relu(self.fc2(x))
         return self.fc_out(x)
 
+
 class DDPG(object):
     def __init__(
             self,
