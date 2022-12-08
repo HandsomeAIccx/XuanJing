@@ -6,7 +6,8 @@
 import os
 import sys
 # 添加源码路径
-sys.path.append(os.path.join(os.path.abspath(__file__), '../../../'))
+sys.path.insert(0, os.path.abspath("../../"))
+sys.path.insert(0, os.path.abspath(os.path.join("../..", "XuanJing")))
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -23,6 +24,9 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
     'recommonmark',
+    "sphinx.ext.doctest",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.githubpages",
 ]
 
 
