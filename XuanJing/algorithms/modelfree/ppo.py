@@ -29,6 +29,7 @@ class PPO(object):
             args
     ):
         """基于采样样本来更新actor的参数，critic当作是一种trick来更好更新policy而已。"""
+        self.actor = actor
         self.actor_net = actor.actor_net
         # TODO critic可以依据actor中的参数来进行配置，critic也需要封装到另外的一个模块去。
         self.critic_net = ConnectionValueNet(actor=self.actor_net)
