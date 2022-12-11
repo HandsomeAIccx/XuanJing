@@ -71,10 +71,7 @@ def sample_expert_data(n_episode, agent, env, args):
     post_data = Patch()
     for patch in patch_episodes:
         post_data.add(patch)
-    states = post_data.get_value('obs')
-    actions = post_data.get_value('output')['act']
-    avg_episode_rewards = np.sum(post_data.get_value('reward')) / len(patch_episodes)
-    return states, actions, avg_episode_rewards
+    return post_data
 
 
 def bc_args():
@@ -104,12 +101,16 @@ def build_train_bc(args):
         args,
     )
 
-    expert_state, expert_action, avg_episode_reward = sample_expert_data(
+    post_data = sample_expert_data(
         n_episode=1,
         agent=ppo_agent,
         env=env,
         args=ppo_args
     )
+
+    expert_state = post_data.get_value('obs')
+    expert_action = post_data.get_value('output')['act']
+
     random_index = random.sample(range(expert_state.shape[0]), bc_args.n_samples)
     expert_s = expert_state[random_index]
     expert_a = expert_action[random_index]
@@ -120,12 +121,14 @@ def build_train_bc(args):
             torch.set_grad_enabled(True)
             bc_agent.update_parameter(expert_s[sample_indices], expert_a[sample_indices])
             torch.set_grad_enabled(False)
-            expert_state, expert_action, current_return = sample_expert_data(
+            post_data = sample_expert_data(
                 n_episode=5,
                 agent=bc_agent,
                 env=env,
                 args=bc_args
             )
+
+            current_return = np.sum(post_data.get_value('reward')) / 5
             test_returns.append(current_return)
             if (i + 1) % 10 == 0:
                 pbar.set_postfix({'return': '%.3f' % np.mean(test_returns[-10:])})

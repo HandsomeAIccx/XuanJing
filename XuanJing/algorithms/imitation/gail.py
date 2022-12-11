@@ -1,14 +1,14 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2022/9/25 6:22 下午
-# @Author  : Zhiqiang He
-# @Email   : tinyzqh@163.com
-# @File    : gail.py
-# @Software: PyCharm
+import torch.nn as nn
+
+
+class Discriminator(nn.Module):
+    def __init__(self):
+        super(Discriminator, self).__init__()
 
 
 class GAIL(object):
-    def __init__(self):
-        self.actor_net = None
+    def __init__(self, actor, optim, args):
+        self.actor_net = actor.actor_net
         self.discriminator = None
         self.optim = None
 
