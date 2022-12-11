@@ -1,20 +1,24 @@
 import torch
+import copy
 from torch import Tensor
 import numpy as np
-
-from XuanJing.utils.torch_utils import tensorify
+import torch.nn as nn
 import torch.nn.functional as F
 
+from XuanJing.utils.torch_utils import tensorify
+from XuanJing.utils.net.common import linear_lr_scheduler
 
-class ValueNet(torch.nn.Module):
-    def __init__(self, state_dim, hidden_dim):
-        super(ValueNet, self).__init__()
-        self.fc1 = torch.nn.Linear(state_dim, hidden_dim)
-        self.fc2 = torch.nn.Linear(hidden_dim, 1)
+
+class ConnectionValueNet(torch.nn.Module):
+    def __init__(self, actor):
+        super(ConnectionValueNet, self).__init__()
+        self.base_value_net = copy.deepcopy(actor)
+        self.base_value_net_list = list(self.base_value_net.modules())
+        self.last_layer_units = self.base_value_net_list[-1].out_features
+        self.base_value_net.add_module("last_value_layer", nn.Linear(self.last_layer_units, 1))
 
     def forward(self, x):
-        x = F.relu(self.fc1(x))
-        return self.fc2(x)
+        return self.base_value_net(x)
 
 
 class PPO(object):
@@ -27,12 +31,13 @@ class PPO(object):
         """基于采样样本来更新actor的参数，critic当作是一种trick来更好更新policy而已。"""
         self.actor_net = actor.actor_net
         # TODO critic可以依据actor中的参数来进行配置，critic也需要封装到另外的一个模块去。
-        self.critic_net = ValueNet(state_dim=4, hidden_dim=128)
+        self.critic_net = ConnectionValueNet(actor=self.actor_net)
         self.actor_optim = optim
         self.critic_optim = torch.optim.Adam(self.critic_net.parameters(), lr=1e-2)
         self.args = args
         self.learn_step = 0
         self.criterion = torch.nn.SmoothL1Loss()
+        self.policy_lr_scheduler = linear_lr_scheduler(self.actor_optim, 1000000, min_lr=1e-8)
         self.logging = {}
 
     def compute_advantage(self, gamma, lmbda, td_delta):
@@ -78,6 +83,7 @@ class PPO(object):
             critic_loss = F.mse_loss(self.critic_net(obs), td_target.detach()).mean()
 
             self.optimizer_update(self.actor_optim, actor_loss)
+            self.policy_lr_scheduler.step(self.learn_step)
             self.optimizer_update(self.critic_optim, critic_loss)
 
             actor_losses += actor_loss.item()

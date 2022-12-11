@@ -33,6 +33,7 @@ class SampleActor(BaseActor):
 
         output['act'] = np.array([action.item()])
         output['act_logprob'] = logprob
+        assert len(output['act'].shape) == 2, f"{output['act'].shape} should be 2!"
         return output
 
     def get_logprob_entropy(self, state: Tensor, action: Tensor) -> (Tensor, Tensor):

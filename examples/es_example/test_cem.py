@@ -6,6 +6,7 @@ from XuanJing.actor.actor_group.es_actor import EsActor
 from XuanJing.algorithms.es.cem import CemAgent
 from XuanJing.learner.espolicy import PipeLearner
 
+from XuanJing.utils.net.common import orthogonal_init
 
 def cem_args():
     parser = argparse.ArgumentParser()
@@ -35,6 +36,7 @@ def build_train(args):
         output_dim=int(np.prod(env.action_space.n)),
         hidden_sizes=args.actor_net,
     )
+
     actor = EsActor(actor_net, env, args)
     agent = CemAgent(
         actor_net,

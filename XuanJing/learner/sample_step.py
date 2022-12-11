@@ -19,8 +19,7 @@ class PipeLearner(BaseLearner):
             actor,
             agent
     ):
-        np.random.seed(args.seed)
-        torch.manual_seed(args.seed)
+        PipeLearner.set_global_seeds(args.seed)
 
         sampler = Sampler(actor=actor, env=env, args=args)
 

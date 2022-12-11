@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2022/7/16 12:00 下午
-# @Author  : Zhiqiang He
-# @Email   : tinyzqh@163.com
-# @File    : base.py
-# @Software: PyCharm
+import torch
+import random
+import numpy as np
 
 class BaseLearner(object):
     @staticmethod
@@ -12,3 +9,16 @@ class BaseLearner(object):
         for k, v in log_data.items():
             writer.add_scalar(k, v, step)
 
+    @staticmethod
+    def set_global_seeds(seed):
+        r""" Set the random seed.
+
+        It sets the following dependencies with the given random seed:
+
+        Args:
+            seed (int): a given seed.
+        """
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)

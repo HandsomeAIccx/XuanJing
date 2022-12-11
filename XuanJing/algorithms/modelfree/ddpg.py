@@ -1,5 +1,6 @@
 import copy
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from XuanJing.buffer.replaybuffer import ReplayBuffer
 from XuanJing.utils.torch_utils import tensorify
@@ -19,6 +20,30 @@ class QValueNet(torch.nn.Module):
         return self.fc_out(x)
 
 
+class ConnectionValueNet(torch.nn.Module):
+    def __init__(self, actor):
+        super(ConnectionValueNet, self).__init__()
+        self.base_value_net = copy.deepcopy(actor)
+
+        self.pre_process = self.base_value_net.pre_process
+        self.pre_process_last_dim = list(self.pre_process.modules())[-1].out_features
+        self.action_dim = list(self.base_value_net.modules())[-1].out_features
+
+        self.post_layer = nn.Sequential(
+            nn.Linear(self.pre_process_last_dim + self.action_dim, 128),
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, 1)
+        )
+
+    def forward(self, x, a):
+        x = self.pre_process(x)
+        cat = torch.cat([x, a], dim=1)
+        res = self.post_layer(cat)
+        return res
+
+
 class DDPG(object):
     def __init__(
             self,
@@ -29,8 +54,9 @@ class DDPG(object):
         super(DDPG, self).__init__()
         self.actor_net = actor.actor_net
         self.target_actor_net = copy.deepcopy(self.actor_net)
-        self.critic_net = QValueNet(3, 128, 1).to(args.device)
-        self.target_critic_net = copy.deepcopy(self.critic_net)
+        # self.critic_net = QValueNet(3, 128, 1).to(args.device)
+        self.critic_net = ConnectionValueNet(self.actor_net).to(args.device)
+        self.target_critic_net = copy.deepcopy(self.critic_net).to(args.device)
         self.target_critic_net.load_state_dict(self.critic_net.state_dict())
         self.target_actor_net.load_state_dict(self.actor_net.state_dict())
         self.actor_optimizer = optim
@@ -51,7 +77,7 @@ class DDPG(object):
         batch_data = self.replay_buffer.random_pop(self.args.batch_size)
 
         obs = tensorify(batch_data.get_value("obs"))
-        actions = tensorify(batch_data.get_value("output")["act"]).view(-1, 1)
+        actions = tensorify(batch_data.get_value("output")["act"])
         next_obs = tensorify(batch_data.get_value("next_obs"))
         reward = tensorify(batch_data.get_value("reward")).view(-1, 1)
         done = tensorify(batch_data.get_value("done")).view(-1, 1)

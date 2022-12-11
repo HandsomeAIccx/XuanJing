@@ -18,6 +18,7 @@ class EsActor(BaseActor):
         output = {}
         if not isinstance(obs, torch.Tensor):
             obs = torch.Tensor(obs)
-        action = np.argmax(self.actor_net(obs).detach().numpy())
-        output['act'] = np.array([action])
+        action = np.array(np.argmax(self.actor_net(obs).detach().numpy()))
+        output['act'] = action.reshape(-1, 1)
+        assert len(output['act'].shape) == 2, f"{output['act'].shape} should be 2!"
         return output

@@ -1,5 +1,6 @@
-from XuanJing.env.sample.patch import Patch
 import copy
+
+from XuanJing.env.sample.patch import Patch
 
 
 class Sampler(object):

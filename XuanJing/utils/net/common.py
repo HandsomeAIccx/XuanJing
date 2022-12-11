@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch import nn
+import torch.optim as optim
 from torch.nn.utils import vector_to_parameters
 from torch.nn.utils import parameters_to_vector
 
@@ -43,10 +44,62 @@ class Module(nn.Module):
 
 	def from_vec(self, x):
 		r"""Set the network parameters from a single flattened vector.
-        Args:
-            x (Tensor): A single flattened vector of the network parameters with consistent size.
-        """
+		Args:
+			x (Tensor): A single flattened vector of the network parameters with consistent size.
+		"""
 		vector_to_parameters(vec=x, parameters=self.parameters())
+
+
+def linear_lr_scheduler(optimizer, N, min_lr):
+	r"""Defines a linear learning rate scheduler.
+
+	Args:
+		optimizer (Optimizer): optimizer
+		N (int): maximum bounds for the scheduling iteration
+			e.g. total number of epochs, iterations or time steps.
+		min_lr (float): lower bound of learning rate
+	"""
+	initial_lr = optimizer.defaults['lr']
+	f = lambda n: max(min_lr / initial_lr, 1 - n / N)
+	lr_scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=f)
+	return lr_scheduler
+
+
+def orthogonal_init(module, nonlinearity=None, weight_scale=1.0, constant_bias=0.0):
+	r"""Applies orthogonal initialization for the parameters of a given module.
+
+	 Args:
+		module (nn.Module): A module to apply orthogonal initialization over its parameters.
+		nonlinearity (str, optional): Nonlinearity followed by forward pass of the module. When nonlinearity
+			is not ``None``, the gain will be calculated and :attr:`weight_scale` will be ignored.
+				Default: ``None``
+		weight_scale (float, optional): Scaling factor to initialize the weight. Ignored when
+			:attr:`nonlinearity` is not ``None``. Default: 1.0
+		constant_bias (float, optional): Constant value to initialize the bias. Default: 0.0
+
+	.. note::
+
+		Currently, the only supported :attr:`module` are elementary neural network layers, e.g.
+		nn.Linear, nn.Conv2d, nn.LSTM. The submodules are not supported.
+
+	Example::
+		>>> a = nn.Linear(2, 3)
+		>>> ortho_init(a)
+	"""
+	if nonlinearity is not None:
+		gain = nn.init.calculate_gain(nonlinearity)
+	else:
+		gain = weight_scale
+
+	if isinstance(module, (nn.RNNBase, nn.RNNCellBase)):
+		for name, param in module.named_parameters():
+			if 'weight_' in name:
+				nn.init.orthogonal_(param, gain=gain)
+			elif 'bias_' in name:
+				nn.init.constant_(param, constant_bias)
+	else:  # other modules with single .weight and .bias
+		nn.init.orthogonal_(module.weight, gain=gain)
+		nn.init.constant_(module.bias, constant_bias)
 
 
 class MLP(Module):
@@ -58,9 +111,12 @@ class MLP(Module):
 			activation=nn.ReLU
 	):
 		super(MLP, self).__init__()
+		assert isinstance(hidden_sizes, list), "hidden_layer_sizes must be a list of integers"
+		self.input_dim = input_dim
+		self.output_dim = output_dim
+		hidden_sizes = [input_dim] + hidden_sizes
 
 		activation_list = [activation for _ in range(len(hidden_sizes))]
-		hidden_sizes = [input_dim] + list(hidden_sizes)
 		model = []
 		for in_dim, out_dim, activ in zip(hidden_sizes[:-1], hidden_sizes[1:], activation_list):
 			model += mlpblock(input_dim=in_dim, output_dim=out_dim, activation=activ)
@@ -92,27 +148,43 @@ class VAnet(torch.nn.Module):
 class PolicyNet(torch.nn.Module):
 	def __init__(self, input_dim, hidden_sizes, output_dim, action_bound):
 		super(PolicyNet, self).__init__()
+		self.pre_process = nn.Sequential(
+			nn.Linear(input_dim, input_dim)
+		)
 		self.fc = MLP(input_dim, output_dim, hidden_sizes)
 		self.action_bound = action_bound  # action_bound是环境可以接受的动作最大值
 
 	def forward(self, x):
+		x = self.pre_process(x)
 		x = torch.tanh(self.fc(x))
 		return x * self.action_bound
+
+
+class CarlaNetPreProcess(torch.nn.Module):
+	def __init__(self, env):
+		super(CarlaNetPreProcess, self).__init__()
+		self.bird_eye_shape = env.observation_space.spaces['birdeye'].shape
+		self.camera_shape = env.observation_space.spaces['camera'].shape
+		self.lidar_shape = env.observation_space.spaces['lidar'].shape
+		self.state = env.observation_space.spaces['state'].shape
+
+		self.pre_process = torch.nn.Linear(self.state[0], self.state[0])
+		self.output_dim = self.state[0]
+
+	def forward(self, x):
+		return self.pre_process(x['state'])
 
 
 class CarlaNet(torch.nn.Module):
 	def __init__(self, env):
 		super(CarlaNet, self).__init__()
 		self.env = env
-		self.bird_eye_shape = env.observation_space.spaces['birdeye'].shape
-		self.camera_shape = env.observation_space.spaces['camera'].shape
-		self.lidar_shape = env.observation_space.spaces['lidar'].shape
-		self.state = env.observation_space.spaces['state'].shape
 
-		# network
-		self.state_net = torch.nn.Linear(self.state[0], 2)
-		print("a")
+		# first step precess the special data struct.
+		self.pre_process = CarlaNetPreProcess(env=env)
+		# constrain the network you wanted.
+		self.state_net = torch.nn.Linear(self.pre_process.output_dim, 2)
 
 	def forward(self, x):
-		a = self.state_net(x['state'])
-		return a
+		pre_res = self.pre_process(x)
+		return self.state_net(pre_res)

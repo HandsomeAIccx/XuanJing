@@ -32,6 +32,7 @@ class EpsGreedyActor(BaseActor):
         else:
             action = self.actor_net(obs).argmax(dim=1).detach().cpu().numpy()
 
-        output['act'] = action
+        output['act'] = np.array([action])
+        assert len(output['act'].shape) == 2, f"{output['act'].shape} should be 2!"
         return output
 

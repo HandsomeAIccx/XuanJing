@@ -24,5 +24,6 @@ class NoiseActor(BaseActor):
             obs = tensorify(obs)
         action = self.actor_net(obs).detach().numpy()
         action = action + self.sigma * np.random.randn(self.action_dim)
-        output['act'] = np.array([action])
+        output['act'] = np.array(action)
+        assert len(output['act'].shape) == 2, f"{output['act'].shape} should be 2!"
         return output

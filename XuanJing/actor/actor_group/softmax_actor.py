@@ -24,7 +24,8 @@ class SoftmaxActor(BaseActor):
         softmax_probs = F.softmax(self.actor_net(obs), dim=1)
         action_dist = torch.distributions.Categorical(softmax_probs)
         action = action_dist.sample()
-        output['act'] = np.array([action.item()])
+        output['act'] = np.array([action.numpy()])
+        assert len(output['act'].shape) == 2, f"{output['act'].shape} should be 2!"
         return output
 
     def sample_softmax_logits(self, obs):

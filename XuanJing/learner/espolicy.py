@@ -15,6 +15,8 @@ class PipeLearner(BaseLearner):
             actor,
             agent
     ):
+        PipeLearner.set_global_seeds(args.seed)
+
         sampler = Sampler(actor=actor, env=env, args=args)
         tqdm_range = tqdm(range(args.n_sessions))
         for session in tqdm_range:
