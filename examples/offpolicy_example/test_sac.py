@@ -6,7 +6,7 @@ from XuanJing.utils.net.common import MLP
 from XuanJing.algorithms.modelfree.sac import SAC
 from XuanJing.env.build_env import env_vector
 from XuanJing.actor.actor_group.softmax_actor import SoftmaxActor
-from XuanJing.learner.sample_episode import PipeLearner
+from XuanJing.learner.sample_step import PipeLearner
 
 
 def sac_args():

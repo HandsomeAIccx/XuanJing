@@ -4,7 +4,7 @@ import numpy as np
 
 from XuanJing.utils.net.common import VAnet
 from XuanJing.env.build_env import env_vector
-from XuanJing.learner.sample_episode import PipeLearner
+from XuanJing.learner.sample_step import PipeLearner
 from XuanJing.algorithms.modelfree.dueling_dqn import DuelingDQN
 from XuanJing.actor.actor_group.epsilon_greedy_actor import EpsGreedyActor
 

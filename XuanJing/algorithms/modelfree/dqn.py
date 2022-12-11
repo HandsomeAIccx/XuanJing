@@ -34,7 +34,7 @@ class DQN(nn.Module):
         batch_data = self.replay_buffer.random_pop(self.args.batch_size)
 
         obs = tensorify(batch_data.get_value("obs"))
-        actions = tensorify(batch_data.get_value("output")["act"]).view(-1, 1)
+        actions = tensorify(batch_data.get_value("output")["act"])
         next_obs = tensorify(batch_data.get_value("next_obs"))
         reward = tensorify(batch_data.get_value("reward")).view(-1, 1)
         done = tensorify(batch_data.get_value("done")).view(-1, 1)

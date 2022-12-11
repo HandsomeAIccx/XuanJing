@@ -6,7 +6,7 @@ from XuanJing.utils.net.common import MLP
 from XuanJing.algorithms.modelfree.dqn import DQN
 from XuanJing.actor.actor_group.epsilon_greedy_actor import EpsGreedyActor
 from XuanJing.env.build_env import env_vector
-from XuanJing.learner.sample_episode import PipeLearner
+from XuanJing.learner.sample_step import PipeLearner
 
 
 def dqn_args():
