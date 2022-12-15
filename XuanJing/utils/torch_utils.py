@@ -1,12 +1,7 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2022/9/24 9:19 上午
-# @Author  : Zhiqiang He
-# @Email   : tinyzqh@163.com
-# @File    : torch_utils.py
-# @Software: PyCharm
-
-import numpy as np
+import os
+import json
 import torch
+import numpy as np
 
 
 def tensorify(data):
@@ -32,3 +27,23 @@ def numpyify(data):
         return data.detach().cpu().numpy()
     else:
         return np.asarray(data)
+
+
+def dump_json_data(data, file_name):
+    assert type(file_name) == str, "file_path must be a string."
+    assert file_name.endswith('.json'), "file_path must endswith '.json'."
+    current_path = os.path.abspath(os.path.dirname(__file__))
+    file_path = os.path.join(current_path, file_name)
+    if not os.path.exists(file_path):
+        os.system(f"touch {file_path}")
+    with open(file_path, 'a') as json_file:
+        json.dump(data, json_file, ensure_ascii=False, indent=1)
+
+
+def deep_list(data, dtype=None):
+    if isinstance(data, dict):
+        return {k: deep_list(v, dtype) for k, v in data.items()}
+    elif isinstance(data, torch.Tensor):
+        return data.detach().cpu().numpy().tolist()
+    else:
+        raise ValueError(f"Not Support type {type(data)}.")
