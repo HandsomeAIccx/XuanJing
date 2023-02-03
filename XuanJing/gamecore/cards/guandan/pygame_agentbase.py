@@ -6,7 +6,7 @@ class Card(object):
     def __init__(self, suit, rank):
         self.suit = suit
         self.rank = rank
-        self.image = pygame.image.load(f"C:/guandan/Guandan/CFR/pukeImage/{suit + rank}.png")
+        self.image = pygame.image.load(f"./game/img/{suit + rank}.png")
         self.isSelected = False
 
     def __str__(self):
@@ -44,7 +44,7 @@ class GuanDanPyGame(object):
         self.brightGreen = (0, 255, 0)
         self.brightRed = (255, 0, 0)
 
-        self.bg = "C:/guandan/Guandan/CFR/bg1.png"
+        self.bg = "C:./game/bg1.png"
 
         self.cardsInHand = []
         self.selectedCards = []
