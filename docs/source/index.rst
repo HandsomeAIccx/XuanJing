@@ -42,7 +42,9 @@ This documentation is organized as followed:
    algorithms/ddpg
    algorithms/ppo
    algorithms/trpo
-
+   algorithms/ddpm
+   algorithms/psro
+   algorithms/be
 
 
 FAQ

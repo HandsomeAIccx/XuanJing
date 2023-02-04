@@ -16,7 +16,7 @@ def RobbinsMonro(k):
     estimated_root = []
     observation_noise = []
     x_axis = []
-    for i in range(k):
+    for i in range(1, k):
         noise = np.random.randn()
         w_k_1 = w_k - 1/k * (fun(w_k) + noise)
         estimated_root.append(w_k)

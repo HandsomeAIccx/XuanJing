@@ -5,8 +5,8 @@ from XuanJing.gamecore.cards.guandan.pygame_agent import PyGameAgent
 
 if __name__ == "__main__":
     agents = [
-        RandomAgent(),
-        # PyGameAgent(),
+        # RandomAgent(),
+        PyGameAgent(),
         RandomAgent(),
         RandomAgent(),
         RandomAgent(),

@@ -22,7 +22,6 @@ def reinforce_args():
     parser.add_argument("--epsilon", type=float, default=0.01)
     # learn
     parser.add_argument("--buffer_size", type=int, default=10000)
-    parser.add_argument("--start_learn_buffer_size", type=int, default=500)
     parser.add_argument("--lr", type=float, default=2e-3)
     parser.add_argument("--gamma", type=float, default=0.98)
     parser.add_argument("--batch_size", type=int, default=64)

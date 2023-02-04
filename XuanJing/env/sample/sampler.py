@@ -1,6 +1,7 @@
 import copy
 
 from XuanJing.env.sample.patch import Patch
+from XuanJing.utils.torch_utils import tensorify
 
 
 class Sampler(object):
@@ -30,7 +31,7 @@ class Sampler(object):
             episode_patch_data = Patch()
             obs, done = self.env.reset(), False
             while not done:
-                actor_out = self.actor.sample_forward(obs)
+                actor_out = self.actor.sample_action(tensorify(obs))
                 action = actor_out['act']
                 obs_next, reward, done, info = self.env.step(action)
                 episode_patch_data.add(

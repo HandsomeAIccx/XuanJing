@@ -44,13 +44,6 @@ class TRPO:
         self.device = args.device
         self.logging = {}
 
-    def take_action(self, state):
-        state = torch.tensor([state], dtype=torch.float).to(self.device)
-        probs = self.actor(state)
-        action_dist = torch.distributions.Categorical(probs)
-        action = action_dist.sample()
-        return action.item()
-
     def hessian_matrix_vector_product(self, states, old_action_dists, vector):
         # 计算黑塞矩阵和一个向量的乘积
         new_action_dists = torch.distributions.Categorical(self.actor.sample_softmax_logits(states))

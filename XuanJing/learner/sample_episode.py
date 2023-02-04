@@ -23,7 +23,7 @@ class PipeLearner(BaseLearner):
 
         sampler = Sampler(actor=actor, env=env, args=args)
 
-        run_dir = Path(os.path.split(os.path.dirname(os.path.abspath(__file__)))[0] + "/results") / args.alg
+        run_dir = Path(os.path.split(os.path.dirname(os.path.abspath(__file__)))[0] + "/results") / args.alg / args.task
         os.makedirs(str(run_dir), exist_ok=True)
 
         writer = tb.SummaryWriter(logdir=run_dir)
