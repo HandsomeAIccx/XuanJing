@@ -1,5 +1,6 @@
 import argparse
 import numpy as np
+import matplotlib.pyplot as plt
 
 from XuanJing.algorithms.multiagent.maxmin import solve_maxmin
 from XuanJing.algorithms.multiagent.minmax import solve_minmax
@@ -22,10 +23,15 @@ def double_oracle(A: np.ndarray):
     col_strategies = [i for i in range(cols) if col_flags[i]]
 
     n = 0
+
+    iv = []
+    ivr = []
+    ivc = []
+
     while True:
         n = n + 1
 
-        # Step 1: solve restricted game 得到收益矩阵子集
+        # solve restricted game 得到收益矩阵子集
         Ar = A[np.ix_(row_strategies, col_strategies)]
         xr_row, v_row = solve_maxmin(Ar)  # 得到子博弈问题中行玩家的纳什策略
         xr_col, v_col = solve_minmax(Ar)  # 得到子博弈问题中列玩家的纳什策略
@@ -42,9 +48,13 @@ def double_oracle(A: np.ndarray):
         for i in range(len(xr_col)):  # 将子博弈问题中的列玩家的解赋值给原问题
             x_col[col_strategies[i]] = xr_col[i]
 
-        # Step 2: compute response values for the restricted strategies
+        # compute response values for the restricted strategies
         row_values = A @ x_col  # 行玩家的收益矩阵
         col_values = A.T @ x_row  # 列玩家的收益矩阵
+
+        iv.append(x_row.T @ (A @ x_col))
+        ivr.append(row_values.max())
+        ivc.append(col_values.min())
 
         updated = False
 
@@ -66,7 +76,7 @@ def double_oracle(A: np.ndarray):
                 break
 
         if not updated:
-            return x_row, x_col, vr, vc
+            return x_row, x_col, vr, vc, n, iv, ivr, ivc
 
 
 if __name__ == "__main__":
@@ -82,5 +92,15 @@ if __name__ == "__main__":
     rng = np.random.default_rng(args.seed)
     A = rng.uniform(0, 1, (args.rows, args.cols))
     print('Solving with Double Oracle...')
-    x_row_do, x_col_do, v_row_do, v_col_do = double_oracle(A)
+    x_row_do, x_col_do, v_row_do, v_col_do, n_do, iv_do, ivr_do, ivc_do = double_oracle(A)
     print(f'Row value = {v_row_do}, column value = {v_col_do}, gap = {v_row_do - v_col_do}')
+
+    e_do = np.array(ivr_do) - np.array(ivc_do)
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.plot(e_do, label='DoubleOracle')
+    ax.set_ylabel('Exploitability')
+    ax.set_xlabel('Iterations')
+    ax.legend()
+
+    plt.show()
